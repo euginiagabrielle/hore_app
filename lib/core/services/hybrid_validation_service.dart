@@ -8,7 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 class HybridValidationService {
   final _supabase = Supabase.instance.client;
-  final String storeWifiBSSID = "1C:E5:04:DA:E1:84";
+  final String storeWifiBSSID = "1C:E5:04:DA:E1:88";
 
   Future<bool> validateAccess(int employeeId, String employeeName, String role) async {
     if (role.toLowerCase() == 'owner') {

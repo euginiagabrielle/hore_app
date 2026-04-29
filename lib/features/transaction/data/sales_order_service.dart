@@ -35,17 +35,19 @@ class SalesOrderService {
   String? currentEmployeeName;
   int? currentCustomerId;
   String? currentCustomerName;
+  String? currentCustomerPhone;
 
   // Set data kasir
   void setEmployee(int id, String name) {
-    currentCustomerId = id;
-    currentCustomerName = name;
+    currentEmployeeId = id;
+    currentEmployeeName = name;
   }
 
   // Set data pelanggan
-  void setCustomer(int? id, String? name) {
+  void setCustomer(int? id, String? name, String? phone) {
     currentCustomerId = id;
     currentCustomerName = name;
+    currentCustomerPhone = phone;
   }
 
   // Add item to order

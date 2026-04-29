@@ -27,10 +27,11 @@ class _CheckoutPageState extends State<CheckoutPage> {
     setState(() {});
   }
 
+  // Send order ke kasir
   Future<void> _submitOrder() async {
-    if (_nameController.text.trim().isEmpty) {
+    if (_orderService.currentCustomerId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Nama pelanggan wajib diisi!"), backgroundColor: Colors.red),
+        const SnackBar(content: Text("Silakan pilih atau daftarkan pelanggan terlebih dahulu!"), backgroundColor: Colors.red),
       );
       return;
     }
@@ -45,16 +46,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
     setState(() => _isLoading = true);
 
     try {
-      // Data
-      // final orderData = {
-      //   'customer_name': _nameController.text.trim(),
-      //   'customer_phone': _phoneController.text.trim(),
-      //   'total_price': _orderService.totalPrice,
-      // };
-      // final itemsData = _orderService.currentItems;
-      final salesService = SalesOrderService();
-      int? empId = salesService.currentEmployeeId;
-      String empName = salesService.currentEmployeeName ?? "Unknown";
+      // Ambil data karyawan
+      int? empId = _orderService.currentEmployeeId;
+      String empName = _orderService.currentEmployeeName ?? "Unknown";
       
       if(empId == null) {
         final user = Supabase.instance.client.auth.currentUser;
@@ -70,16 +64,11 @@ class _CheckoutPageState extends State<CheckoutPage> {
           empName = empData['employee_name'];
           
           // Simpan ke memori agar transaksi berikutnya tidak perlu loading lagi
-          salesService.setEmployee(empId!, empName);
+          _orderService.setEmployee(empId!, empName);
         } else {
           // Jika ternyata sesi login sudah habis
           throw "Sesi login tidak ditemukan. Silakan logout dan login kembali.";
         }
-      }
-
-      int? finalCustomerId = salesService.currentCustomerId;
-      if (finalCustomerId == 0) {
-        finalCustomerId = null; 
       }
 
       // Check the internet connection
@@ -88,12 +77,13 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
       // Save to local database as a draft
       await LocalDbHelper.instance.saveDraftOrder(
-        customerId: finalCustomerId,
-        customerName: _nameController.text.trim(),
+        customerId: _orderService.currentCustomerId,
+        customerName: _orderService.currentCustomerName,
+        customerPhone: _phoneController.text,
         employeeId: empId,
         employeeName: empName,
-        totalPrice: salesService.totalPrice,
-        items: salesService.currentItems,
+        totalPrice: _orderService.totalPrice,
+        items: _orderService.currentItems,
       );
 
       if  (isOffline) {
@@ -114,20 +104,13 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text("Pesanan berhasil terkirim ke kasir."),
-              backgroundColor: Colors.green,
-            ),
+            const SnackBar(content: Text("Pesanan berhasil terkirim ke kasir."), backgroundColor: Colors.green),
           );
         }
         // Simulasi pengiriman online sukses
-        await Future.delayed(const Duration(seconds: 1));
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text("Pesanan langsung terkirim ke kasir."),
-              backgroundColor: Colors.green,
-            ),
+            const SnackBar(content: Text("Pesanan langsung terkirim ke kasir."), backgroundColor: Colors.green),
           );
         }
       }
@@ -135,7 +118,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
       // Clear the display after order is saved
       if (mounted) {
         _orderService.clearOrder();
-        salesService.clearOrder();
         context.pop();
       }
 
@@ -148,6 +130,183 @@ class _CheckoutPageState extends State<CheckoutPage> {
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  Future<void> _showAddCustomerDialog() async {
+    final TextEditingController newNameCtrl = TextEditingController();
+    final TextEditingController newPhoneCtrl = TextEditingController();
+    final TextEditingController newAddressCtrl = TextEditingController();
+    bool isSaving = false;
+
+    await showDialog(
+      context: context, 
+      barrierDismissible: false,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text("Daftar Member Baru"),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(controller: newNameCtrl, decoration: const InputDecoration(labelText: "Nama Lengkap (Wajib)")),
+                    const SizedBox(height: 8),
+                    TextField(controller: newPhoneCtrl, keyboardType: TextInputType.phone, decoration: const InputDecoration(labelText: "Nomor HP (Wajib)")),
+                    const SizedBox(height: 8),
+                    TextField(controller: newAddressCtrl, decoration: const InputDecoration(labelText: "Alamat (Opsional)")),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: isSaving ? null : () => Navigator.pop(context), 
+                  child: const Text("Batal"),
+                ),
+                ElevatedButton(
+                  onPressed: isSaving ? null : () async {
+                    if (newNameCtrl.text.trim().isEmpty || newPhoneCtrl.text.trim().isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Nama dan No HP wajib diisi!"), backgroundColor: Colors.red));
+                      return;
+                    }
+
+                    setDialogState(() => isSaving = true);
+
+                    try {
+                      // Simpan ke Supabase
+                      final response = await Supabase.instance.client.from('customers').insert({
+                        'customer_name': newNameCtrl.text.trim(),
+                        'customer_phone_number': newPhoneCtrl.text.trim(),
+                        'customer_address': newAddressCtrl.text.trim().isEmpty ? "-" : newAddressCtrl.text.trim(),
+                      }).select('customer_id, customer_name, customer_phone_number').single();
+
+                      // Otomatis terisi ke layar Checkout
+                      setState(() {
+                        _nameController.text = response['customer_name'];
+                        _phoneController.text = response['customer_phone_number'];
+                      });
+                      _orderService.setCustomer(response['customer_id'], response['customer_name'], response['customer_phone_number']);
+
+                      if (mounted) {
+                        Navigator.pop(context); // Tutup dialog tambah member
+                        Navigator.pop(context); // Tutup bottom sheet pencarian member
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Member didaftarkan & dipilih!"), backgroundColor: Colors.green));
+                      }
+                    } catch (e) {
+                      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Gagal mendaftar: $e"), backgroundColor: Colors.red));
+                      setDialogState(() => isSaving = false);
+                    }
+                  }, 
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
+                  child: isSaving 
+                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) 
+                    : const Text("Simpan"),
+                ),
+              ],
+            );
+          }
+        );
+      }
+    );
+  }
+
+  Future<void> _showCustomerSearch() async {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true, 
+      backgroundColor: Colors.white, // Pastikan background bersih
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      builder: (context) {
+        // 1. Pindahkan Container tinggi fix ke PALING LUAR
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.7, // Langsung paksa 70% layar
+          padding: const EdgeInsets.only(top: 16, left: 16, right: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 2. Header render duluan TANPA menunggu database
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text("Pilih Member", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  ElevatedButton.icon(
+                    onPressed: _showAddCustomerDialog,
+                    icon: const Icon(Icons.person_add, size: 18),
+                    label: const Text("Member Baru"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.orange, 
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    ),
+                  )
+                ],
+              ),
+              const Divider(),
+              
+              // 3. FutureBuilder HANYA membungkus list datanya saja!
+              Expanded(
+                child: FutureBuilder<List<Map<String, dynamic>>>(
+                  future: Supabase.instance.client
+                      .from('customers')
+                      .select('customer_id, customer_name, customer_phone_number')
+                      .order('customer_name', ascending: true),
+                  builder: (context, snapshot) {
+                    
+                    // Kondisi 1: Sedang Loading
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator(color: Colors.orange));
+                    }
+                    
+                    // Kondisi 2: Jika Supabase Error
+                    if (snapshot.hasError) {
+                      return Center(child: Text("Error: ${snapshot.error}", textAlign: TextAlign.center));
+                    }
+
+                    final customers = snapshot.data ?? [];
+
+                    // Kondisi 3: Jika Data Kosong (Termasuk jika diblokir RLS)
+                    if (customers.isEmpty) {
+                      return const Center(
+                        child: Text(
+                          "Belum ada data member.\nAtau RLS Supabase belum dibuka.", 
+                          textAlign: TextAlign.center, 
+                          style: TextStyle(color: Colors.grey)
+                        )
+                      );
+                    }
+
+                    // Kondisi 4: Data Sukses Ditampilkan
+                    return ListView.builder(
+                      itemCount: customers.length,
+                      itemBuilder: (context, index) {
+                        final customer = customers[index];
+                        return Card(
+                          elevation: 0.5,
+                          margin: const EdgeInsets.symmetric(vertical: 4),
+                          child: ListTile(
+                            leading: const CircleAvatar(backgroundColor: Colors.orange, child: Icon(Icons.person, color: Colors.white)),
+                            title: Text(customer['customer_name'], style: const TextStyle(fontWeight: FontWeight.bold)),
+                            subtitle: Text(customer['customer_phone_number'] ?? '-'),
+                            onTap: () {
+                              setState(() {
+                                _nameController.text = customer['customer_name'];
+                                _phoneController.text = customer['customer_phone_number'] ?? '';
+                              });
+                              _orderService.setCustomer(customer['customer_id'], customer['customer_name'], customer['customer_phone_number']);
+                              Navigator.pop(context); // Tutup pop-up
+                            },
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+    );
   }
 
   @override
@@ -177,20 +336,28 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 children: [
                   const Text("Informasi Pelanggan", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 12),
+                  
+                  // TEXTFIELD NAMA
                   TextField(
                     controller: _nameController,
+                    readOnly: true,
+                    onTap: _showCustomerSearch,
                     decoration: const InputDecoration(
-                      labelText: "Nama Lengkap",
+                      labelText: "Nama Pelanggan (Wajib)",
+                      hintText: "Ketuk untuk pilih / tambah member",
                       prefixIcon: Icon(Icons.person),
+                      suffixIcon: Icon(Icons.search, color: Colors.orange),
                       border: OutlineInputBorder(),
                     ),
                   ),
                   const SizedBox(height: 12),
+                  
+                  // TEXTFIELD NOMOR HP
                   TextField(
                     controller: _phoneController,
-                    keyboardType: TextInputType.phone,
+                    readOnly: true,
                     decoration: const InputDecoration(
-                      labelText: "Nomor HP (opsional)",
+                      labelText: "Nomor HP",
                       prefixIcon: Icon(Icons.phone),
                       border: OutlineInputBorder(),
                     ),

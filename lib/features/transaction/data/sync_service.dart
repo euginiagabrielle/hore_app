@@ -21,7 +21,7 @@ class SyncService {
         
         final orderResponse = await _supabase.from('orders').insert({
           'employee_id': draftOrder['employee_id'],
-          'customer_id': (draftOrder['customer_id'] == 0) ? null : draftOrder['customer_id'],
+          'customer_id': draftOrder['customer_id'],
           'order_date': draftOrder['created_at'],
           'total_price': draftOrder['total_price'],
           'payment_method_id': null,

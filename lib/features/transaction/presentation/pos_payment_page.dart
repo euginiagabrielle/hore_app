@@ -69,12 +69,15 @@ class _PosPaymentPageState extends State<PosPaymentPage> {
       
       setState(() {
         _orderData = data;
-        _orderDetails = data['order_details'];;
+        _orderDetails = List<Map<String, dynamic>>.from(data['order_details']);
         _isLoading = false;
       });
+
+      print("ORDER DATA: \n$data");
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(this.context).showSnackBar(SnackBar(content: Text("Error: $e")));
       setState(() => _isLoading = false);
+      print("ERROR FETCH ORDER: $e");
     }
   }
 
@@ -152,7 +155,11 @@ class _PosPaymentPageState extends State<PosPaymentPage> {
 
     doc.addPage(
       pw.Page(
-        pageFormat: PdfPageFormat.roll80,
+        pageFormat: PdfPageFormat(
+          105 * PdfPageFormat.mm,
+          150 * PdfPageFormat.mm,
+        ),
+        margin: const pw.EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         build: (pw.Context context) {
           return pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -183,7 +190,7 @@ class _PosPaymentPageState extends State<PosPaymentPage> {
 
               pw.Divider(),
               pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, children: [pw.Text("TOTAL", style: pw.TextStyle(fontWeight: pw.FontWeight.bold)), pw.Text(formattedTotal, style: pw.TextStyle(fontWeight: pw.FontWeight.bold))]),
-              pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, children: [pw.Text("Metode"), pw.Text(_selectedPaymentMethodName)]),
+              pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, children: [pw.Text("Pembayaran"), pw.Text(_selectedPaymentMethodName)]),
               if (_selectedPaymentMethodName == 'Cash') ...[
                 pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, children: [pw.Text("Tunai"), pw.Text(formattedCash)]),
                 pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, children: [pw.Text("Kembalian"), pw.Text(formattedKembalian)]),
@@ -199,31 +206,39 @@ class _PosPaymentPageState extends State<PosPaymentPage> {
 
     // Direct Print
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final printerUrl = prefs.getString('default_printer_url');
+      await Printing.layoutPdf(
+        onLayout: (PdfPageFormat format) async => doc.save(),
+        name: 'Struk_Nota_${widget.orderId}',
+      );
+      // final prefs = await SharedPreferences.getInstance();
+      // final printerUrl = prefs.getString('default_printer_url');
 
-      if (printerUrl != null && printerUrl.isNotEmpty) {
-        // Jika printer sdh disetting, cetak
-        final selectedPrinter = Printer(url: printerUrl);
-        await Printing.directPrintPdf(
-          printer: selectedPrinter, 
-          onLayout: (PdfPageFormat format) async => doc.save(),
-          name: 'Struk_Nota_${widget.orderId}',
-        );
-      } else {
-        // Fallback jika blm setting printer, munculkan popup
-        await Printing.layoutPdf(
-          onLayout: (PdfPageFormat format) async => doc.save(),
-          name: 'Struk_Nota_${widget.orderId}',
-        );
-      }
+      // if (printerUrl != null && printerUrl.isNotEmpty) {
+      //   // Jika printer sdh disetting, cetak
+      //   final selectedPrinter = Printer(url: printerUrl);
+      //   // await Printing.directPrintPdf(
+      //   //   printer: selectedPrinter, 
+      //   //   onLayout: (PdfPageFormat format) async => doc.save(),
+      //   //   name: 'Struk_Nota_${widget.orderId}',
+      //   // );
+      //   await Printing.layoutPdf(
+      //     onLayout: (PdfPageFormat format) async => doc.save(),
+      //     name: 'Struk_Nota_${widget.orderId}',
+      //   );
+      // } else {
+      //   // Fallback jika blm setting printer, munculkan popup
+      //   await Printing.layoutPdf(
+      //     onLayout: (PdfPageFormat format) async => doc.save(),
+      //     name: 'Struk_Nota_${widget.orderId}',
+      //   );
+      // }
     } catch (e) {
       print("Gagal cetak struk: $e");
       // Fallback jika print gagal
-      await Printing.layoutPdf(
-        onLayout: (PdfPageFormat format) async => doc.save(),
-        name: 'Struk_Nota_${widget.orderId},'
-      );
+      // await Printing.layoutPdf(
+      //   onLayout: (PdfPageFormat format) async => doc.save(),
+      //   name: 'Struk_Nota_${widget.orderId},'
+      // );
     }
   }
 

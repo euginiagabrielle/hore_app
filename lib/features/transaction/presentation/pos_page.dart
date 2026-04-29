@@ -26,7 +26,7 @@ class _PosPageState extends State<PosPage> {
   void _setupSupabaseRealtime() {
     _realtimeChannel = _supabase.channel('public:orders');
     _realtimeChannel!.onPostgresChanges(
-      event: PostgresChangeEvent.insert, 
+      event: PostgresChangeEvent.all, 
       schema: 'public',
       table: 'orders',
       callback: (payload) {
@@ -57,13 +57,15 @@ class _PosPageState extends State<PosPage> {
       final data = await _supabase
         .from('orders')
         .select('*, employees(employee_name)')
-        .eq('status', 'pending')
+        .eq('order_status', 'pending')
         .order('created_at', ascending: false);
 
       setState(() {
         _pendingOrders = data;
         _isLoading = false;
       });
+
+      print("PENDING ORDER: \n$data");
     } catch (e) {
       setState(() => _isLoading = false);
       if (mounted) {

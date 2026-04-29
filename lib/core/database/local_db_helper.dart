@@ -50,6 +50,7 @@ class LocalDbHelper {
         quantity INTEGER NOT NULL,
         original_price REAL NOT NULL,
         price REAL NOT NULL,
+        discount_id INTEGER,
         discount_amount REAL NOT NULL DEFAULT 0.0
       )
     ''');
@@ -59,6 +60,7 @@ class LocalDbHelper {
   Future<int> saveDraftOrder({
     required int? customerId,
     required String? customerName,
+    required String? customerPhone,
     required int employeeId,
     required String employeeName,
     required double totalPrice,
@@ -69,6 +71,7 @@ class LocalDbHelper {
       final orderId = await txn.insert('draft_orders', {
         'customer_id': customerId,
         'customer_name': customerName,
+        'customer_phone': customerPhone,
         'employee_id': employeeId,
         'employee_name': employeeName,
         'total_price': totalPrice,
@@ -84,6 +87,7 @@ class LocalDbHelper {
           'quantity': item['quantity'],
           'original_price': item['original_price'],
           'price': item['price'],
+          'discount_id': item['discount'],
           'discount_amount': item['discount_amount'],
         });
       }
