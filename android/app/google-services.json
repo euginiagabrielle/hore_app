@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "234453131899",
+    "project_id": "hore-app",
+    "storage_bucket": "hore-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:234453131899:android:38f9f794b9e6ffa6f778de",
+        "android_client_info": {
+          "package_name": "com.example.hore_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDmsFuQRMR6y9SIJWHfu98Lxwj8v2snjBQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
