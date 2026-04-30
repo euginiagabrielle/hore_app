@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+// import 'package:shared_preferences/shared_preferences.dart';
 // import 'package:path/path.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
@@ -113,10 +113,10 @@ class _PosPaymentPageState extends State<PosPaymentPage> {
     setState(() => _isProcessingPay = true);
 
     try {
-      await _supabase.from('orders').update({
-        'payment_method_id': _selectedPaymentMethodId,
-        'order_status': 'paid'
-      }).eq('order_id', widget.orderId);
+      // await _supabase.from('orders').update({
+      //   'payment_method_id': _selectedPaymentMethodId,
+      //   'order_status': 'paid'
+      // }).eq('order_id', widget.orderId);
 
       await _supabase.rpc('process_payment', params: {
         'p_order_id': widget.orderId,

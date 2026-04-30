@@ -4,6 +4,7 @@ import 'package:hore_app/features/transaction/presentation/pos_payment_page.dart
 // import 'package:path/path.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'package:hore_app/features/auth/presentation/auth_gate.dart';
 import 'features/auth/presentation/login_page.dart';
 import 'dashboard_page.dart';
 import 'features/employees/presentation/employee_list_page.dart';
@@ -18,19 +19,22 @@ import 'features/transaction/presentation/checkout_page.dart';
 final go_router = GoRouter(
   initialLocation: '/',
   routes: [
-    // Login Page
+    // Auth Gate
     GoRoute(
       path: '/',
+      builder: (context, state) => const AuthGate(),
+    ),
+
+    // Login
+    GoRoute(
+      path: '/login',
       builder: (context, state) => const LoginPage(),
     ),
 
     // Admin Dashboard
     GoRoute(
       path: '/dashboard',
-      builder: (context, state) {
-        final userData = state.extra as Map<String, dynamic>;
-        return DashboardPage(userData: userData);
-      }
+      builder: (context, state) => const DashboardPage(),
     ),
 
     // Employee Management
