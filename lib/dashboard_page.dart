@@ -1,6 +1,7 @@
 // import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:hore_app/core/utils/printer_settings.dart';
+import 'package:hore_app/features/transaction/data/sales_order_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hore_app/main.dart';
@@ -66,6 +67,8 @@ class _DashboardPageState extends State<DashboardPage> {
       _employeeName = userData['employee_name'] ?? 'Unknown';
       _employeeRole = userData['employee_role'] ?? 'Unknown';
       _isTrusted = userData['is_trusted'] ?? false;
+
+      SalesOrderService().setEmployee(_employeeId, _employeeName);
 
       // Location Validation
       setState(() => _securityStatus = "Memeriksa Wi-Fi Toko & Sinyal GPS...");
