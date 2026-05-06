@@ -31,15 +31,18 @@ class _PosPageState extends State<PosPage> {
       table: 'orders',
       callback: (payload) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text("Ada pesanan baru!"),
-              backgroundColor: Colors.blueAccent,
-              behavior: SnackBarBehavior.floating,
-              duration: Duration(seconds: 3),
-            ),
-          );
           _fetchPendingOrders();
+
+          if (payload.eventType == PostgresChangeEvent.insert) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text("Ada pesanan baru!"),
+                backgroundColor: Colors.blueAccent,
+                behavior: SnackBarBehavior.floating,
+                duration: Duration(seconds: 3),
+              ),
+            );
+          }
         }
       }
     ).subscribe();
