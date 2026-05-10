@@ -204,52 +204,122 @@ class _ProductListPageState extends State<ProductListPage> {
   Future<void> _printLabel(Map<String, dynamic> product) async {
     final doc = pw.Document();
 
+    final double originalPrice = (product['product_price'] as num).toDouble();
+    final double finalPrice = PriceCalculator.getFinalPrice(product);
+    final bool isDiscounted = PriceCalculator.hasActiveDiscount(product);
+
+    final currencyFormatter = NumberFormat.currency(
+      locale: 'id_ID',
+      symbol: 'Rp ',
+      decimalDigits: 0,
+    );
+
     doc.addPage(
       pw.Page(
         pageFormat: PdfPageFormat.roll80,
+        margin: const pw.EdgeInsets.all(10),
         build: (pw.Context context) {
-          final double price = (product['product_price'] as num).toDouble();
-          final String formattedPrice = NumberFormat.currency(
-            locale: 'id_ID',
-            symbol: 'Rp ',
-            decimalDigits: 0,
-          ).format(price);
-
-          return pw.Center(
+          return pw.Container(
+            width: double.infinity,
+            decoration: pw.BoxDecoration(border: pw.Border.all(color: PdfColors.black, width: 1)),
             child: pw.Column(
-              mainAxisAlignment: pw.MainAxisAlignment.center,
-              crossAxisAlignment: pw.CrossAxisAlignment.center,
+              mainAxisSize: pw.MainAxisSize.min,
               children: [
-                pw.Text(
-                  "Hore Electronic",
-                  style: pw.TextStyle(
-                    fontSize: 10,
-                    fontWeight: pw.FontWeight.bold,
+                // HEADER
+                pw.Container(
+                  width: double.infinity,
+                  padding: const pw.EdgeInsets.symmetric(vertical: 4),
+                  decoration: const pw.BoxDecoration(color: PdfColors.black),
+                  child: pw.Center(
+                    child: pw.Text(
+                      "HORE ELECTRONIC",
+                      style: pw.TextStyle(
+                        color: PdfColors.white,
+                        fontSize: 10,
+                        fontWeight: pw.FontWeight.bold,
+                        letterSpacing: 2,
+                      ),
+                    ),
                   ),
                 ),
-                pw.SizedBox(height: 8),
-                pw.Text(
-                  product['product_name'],
-                  style: pw.TextStyle(
-                    fontSize: 14,
-                    fontWeight: pw.FontWeight.bold,
+
+                pw.Padding(
+                  padding: const pw.EdgeInsets.all(8),
+                  child: pw.Column(
+                    children: [
+                      // NAMA PRODUK
+                      pw.Text(
+                        product['product_name'].toString().toUpperCase(),
+                        textAlign: pw.TextAlign.center,
+                        style: pw.TextStyle(
+                          fontSize: 10,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
+                        maxLines: 3,
+                      ),
+                      pw.SizedBox(height: 8),
+
+                      // INFO KODE & HARGA | QR CODE
+                      pw.Row(
+                        crossAxisAlignment: pw.CrossAxisAlignment.center,
+                        children: [
+                          pw.Expanded(
+                            // KOLOM KIRI
+                            child: pw.Column(
+                              crossAxisAlignment: pw.CrossAxisAlignment.start,
+                              children: [
+                                // KODE BARANG
+                                pw.Text("KODE BARANG:", style: const pw.TextStyle(fontSize: 8)),
+                                pw.Text(
+                                  product['product_code'],
+                                  style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
+                                ),
+                                pw.SizedBox(height: 10),
+
+                                // HARGA
+                                if (isDiscounted) ...[
+                                  pw.Text(
+                                    currencyFormatter.format(originalPrice),
+                                    style: pw.TextStyle(
+                                      fontSize: 16,
+                                      color: PdfColors.grey600,
+                                      decoration: pw.TextDecoration.lineThrough,
+                                    ),
+                                  ),
+                                  pw.SizedBox(height: 2),
+                                  pw.Text(
+                                    currencyFormatter.format(finalPrice),
+                                    style: pw.TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: pw.FontWeight.bold,
+                                      color: PdfColors.black,
+                                    ),
+                                  ),
+                                ] else ...[
+                                  pw.Text(
+                                    currencyFormatter.format(originalPrice),
+                                    style: pw.TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: pw.FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                          pw.SizedBox(width: 8),
+
+                          // KOLOM KANAN
+                          pw.BarcodeWidget(
+                            data: product['product_code'],
+                            barcode: pw.Barcode.qrCode(),
+                            width: 80,
+                            height: 80,
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                  textAlign: pw.TextAlign.center,
-                ),
-                pw.Text(formattedPrice, style: pw.TextStyle(fontSize: 12)),
-                pw.SizedBox(height: 12),
-
-                pw.BarcodeWidget(
-                  data: product['product_code'],
-                  barcode: pw.Barcode.qrCode(),
-                  width: 120,
-                  height: 120,
-                ),
-
-                pw.SizedBox(height: 8),
-                pw.Text(
-                  product['product_code'],
-                  style: const pw.TextStyle(fontSize: 8),
                 ),
               ],
             ),
