@@ -261,7 +261,7 @@ class ProductRepository {
     try {
       final productList = await supabase
         .from('products')
-        .select('*, categories(category_name)')
+        .select('*, categories(category_name), discounts(discount_id, discount_name, discount_value, is_discount_active)')
         .eq('product_code', code)
         .limit(1);
       

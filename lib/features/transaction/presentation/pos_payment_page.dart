@@ -51,6 +51,12 @@ class _PosPaymentPageState extends State<PosPaymentPage> {
     });
   }
 
+  final NumberFormat currencyFormatter = NumberFormat.currency(
+    locale: 'id_ID',
+    symbol: 'Rp ',
+    decimalDigits: 0,
+  );
+
   Future<void> _fetchOrderDetails() async {
     try {
       final data = await _supabase
@@ -124,7 +130,7 @@ class _PosPaymentPageState extends State<PosPaymentPage> {
       });
 
       // Print thermal receipt
-      await _printThermalReceipt(cash);
+      await _printReceipt(cash);
 
       if (mounted) {
         ScaffoldMessenger.of(this.context).showSnackBar(const SnackBar(content: Text("Pembayaran Berhasil & Struk Dicetak!"), backgroundColor: Colors.green));
@@ -146,57 +152,173 @@ class _PosPaymentPageState extends State<PosPaymentPage> {
   }
 
   // Receipt design using thermal paper 80mm
-  Future<void> _printThermalReceipt(double cashAmount) async {
+  Future<void> _printReceipt(double cashAmount) async {
     final doc = pw.Document();
-    final String formattedTotal = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0).format(widget.totalPrice);
-    final String formattedCash = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0).format(cashAmount);
-    final String formattedKembalian = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0).format(_kembalian > 0 ? _kembalian : 0);
+
+    double totalBruto = 0;
+    double totalHemat = 0;
+
+    for (var item in _orderDetails) {
+      final double unitPrice = (item['unit_price'] as num).toDouble();
+      final double disc = (item['discount_amount'] as num?)?.toDouble() ?? 0;
+      final int qty = item['order_quantity'];
+
+      totalBruto += (unitPrice * qty);
+      totalHemat += (disc * qty);
+    }
+
+    final String formattedBruto = currencyFormatter.format(totalBruto);
+    final String formattedHemat = currencyFormatter.format(totalHemat);
+    final String formattedTotal = currencyFormatter.format(widget.totalPrice);
+
+    final String formattedCash = currencyFormatter.format(cashAmount);
+    final String formattedKembalian = currencyFormatter.format(_kembalian > 0 ? _kembalian : 0);
     final String dateStr = DateFormat('dd MMM yyyy HH:mm').format(DateTime.now());
 
     doc.addPage(
       pw.Page(
         pageFormat: PdfPageFormat(
-          105 * PdfPageFormat.mm,
-          150 * PdfPageFormat.mm,
+          105 * PdfPageFormat.mm, //width
+          // 150 * PdfPageFormat.mm, 
+          double.infinity, //length
         ),
         margin: const pw.EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         build: (pw.Context context) {
           return pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
+              // HEADER
               pw.Center(child: pw.Text("HORE ELECTRONIC", style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold))),
+              pw.SizedBox(height: 2),
               pw.Center(child: pw.Text("Jl. Pahlawan No.123, Surabaya", style: const pw.TextStyle(fontSize: 10))),
-              pw.Divider(),
-              pw.Text("Nota  : #${widget.orderId}", style: const pw.TextStyle(fontSize: 10)),
-              pw.Text("Waktu : $dateStr", style: const pw.TextStyle(fontSize: 10)),
+              pw.SizedBox(height: 6),
               pw.Divider(),
 
-              // Product List
+              // INFO TRANSAKSI
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Text("Nota", style: const pw.TextStyle(fontSize: 9)),
+                  pw.Text("#${widget.orderId}", style: const pw.TextStyle(fontSize: 9)),
+                ]
+              ),
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Text("Tanggal", style: const pw.TextStyle(fontSize: 9)),
+                  pw.Text(dateStr, style: const pw.TextStyle(fontSize: 9)),
+                ]
+              ),
+              pw.SizedBox(height: 4),
+              pw.Divider(),
+
+              // DAFTAR BARANG
+              pw.SizedBox(height: 4),
               ..._orderDetails.map((item) {
                 final String name = item['products']['product_name'];
                 final int qty = item['order_quantity'];
-                final String subtotal = NumberFormat.currency(locale: 'id_ID', symbol: '', decimalDigits: 0).format(item['order_subtotal']);
+                final double price = (item['order_price'] as num).toDouble();
+                final double subtotal = (item['order_subtotal'] as num).toDouble();
+                final double discount = (item['discount_amount'] as num?)?.toDouble() ?? 0;
+                final double lineDiscount = discount * qty;
+
+                // return pw.Padding(
+                //   padding: const pw.EdgeInsets.only(bottom: 6),
+                //   child: pw.Row(
+                //     mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                //     children: [
+                //       pw.Expanded(child: pw.Text("$name x$qty", style: const pw.TextStyle(fontSize: 10))),
+                //       pw.Text(subtotal, style: const pw.TextStyle(fontSize: 10)),
+                //     ],
+                //   )
+                // );
+
                 return pw.Padding(
-                  padding: const pw.EdgeInsets.only(bottom: 4),
-                  child: pw.Row(
-                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  padding: const pw.EdgeInsets.only(bottom: 6),
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
                     children: [
-                      pw.Expanded(child: pw.Text("$name x$qty", style: const pw.TextStyle(fontSize: 10))),
-                      pw.Text(subtotal, style: const pw.TextStyle(fontSize: 10)),
+                      pw.Text(name, style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold)),
+                      pw.Row(
+                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                        children: [
+                          pw.Text("   $qty x ${currencyFormatter.format(price)}", style: const pw.TextStyle(fontSize: 9)),
+                          pw.Text(currencyFormatter.format(subtotal), style: const pw.TextStyle(fontSize: 9)),
+                        ],
+                      ),
+
+                      if (discount > 0)
+                        pw.Container(
+                          alignment: pw.Alignment.centerRight,
+                          child: pw.Text(
+                            "(Hemat: -${currencyFormatter.format(lineDiscount)})",
+                            style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey700)
+                          ),
+                        ),
                     ],
-                  )
+                  ),
                 );
               }),
+              pw.SizedBox(height: 4),
+              pw.Divider(),
 
-              pw.Divider(),
-              pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, children: [pw.Text("TOTAL", style: pw.TextStyle(fontWeight: pw.FontWeight.bold)), pw.Text(formattedTotal, style: pw.TextStyle(fontWeight: pw.FontWeight.bold))]),
-              pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, children: [pw.Text("Pembayaran"), pw.Text(_selectedPaymentMethodName)]),
+              // TOTAL & PEMBAYARAN
+              pw.SizedBox(height: 4),
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Text("Total", style: pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold)),
+                  pw.Text(formattedBruto, style: pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold)),
+                ]
+              ),
+              if (totalHemat > 0)
+                pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  children: [
+                    pw.Text("Total Hemat", style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700)),
+                    pw.Text(formattedHemat, style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700))
+                  ]
+                ),
+              pw.SizedBox(height: 2),
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Text("Total Akhir", style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold)),
+                  pw.Text(formattedTotal, style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold))
+                ]
+              ),
+              pw.SizedBox(height: 2),
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, 
+                children: [
+                  pw.Text("Pembayaran", style: const pw.TextStyle(fontSize: 9)),
+                  pw.Text(_selectedPaymentMethodName, style: const pw.TextStyle(fontSize: 9)),
+                ]
+              ),
+
               if (_selectedPaymentMethodName == 'Cash') ...[
-                pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, children: [pw.Text("Tunai"), pw.Text(formattedCash)]),
-                pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, children: [pw.Text("Kembalian"), pw.Text(formattedKembalian)]),
+                pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  children: [
+                    pw.Text("Tunai", style: pw.TextStyle(fontSize: 9)), 
+                    pw.Text(formattedCash, style: const pw.TextStyle(fontSize: 9)),
+                  ]
+                ),
+                pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  children: [
+                    pw.Text("Kembalian", style: const pw.TextStyle(fontSize: 9)), 
+                    pw.Text(formattedKembalian, style: const pw.TextStyle(fontSize: 9)),
+                  ]
+                ),
               ],
+              pw.SizedBox(height: 8),
               pw.Divider(),
-              pw.Center(child: pw.Text("Terima Kasih Atas Kunjungan Anda", style: const pw.TextStyle(fontSize: 10))),
+
+              // FOOTER
+              pw.SizedBox(height: 8),
+              pw.Center(child: pw.Text("Terima Kasih Atas Kunjungan Anda", style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold))),
+              pw.Center(child: pw.Text("Barang yang sudah dibeli tidak dapat ditukar atau dikembalikan.", style: const pw.TextStyle(fontSize: 8), textAlign: pw.TextAlign.center)),
               pw.SizedBox(height: 20),
             ],
           );
@@ -334,12 +456,60 @@ class _PosPaymentPageState extends State<PosPaymentPage> {
                   padding: const EdgeInsets.all(16),
                   itemCount: _orderDetails.length,
                   itemBuilder: (context, index) {
+                    // final item = _orderDetails[index];
+                    // final String price = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0).format(item['order_price']);
+                    // return ListTile(
+                    //   title: Text(item['products']['product_name'], style: const TextStyle(fontWeight: FontWeight.bold)),
+                    //   subtitle: Text("${item['order_quantity']} x $price"),
+                    //   trailing: Text(NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0).format(item['order_subtotal'])),
+                    // );
                     final item = _orderDetails[index];
-                    final String price = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0).format(item['order_price']);
+                    final product = item['products'];
+                    final double unitPrice = (item['unit_price'] as num).toDouble();
+                    final discountAmount = (item['discount_amount'] as num?)?.toDouble() ?? 0;
+                    final double finalPrice = (item['order_price'] as num).toDouble();
+                    final int qty = item['order_quantity'];
+                    final double subtotal = (item['order_subtotal'] as num).toDouble();
+
                     return ListTile(
-                      title: Text(item['products']['product_name'], style: const TextStyle(fontWeight: FontWeight.bold)),
-                      subtitle: Text("${item['order_quantity']} x $price"),
-                      trailing: Text(NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0).format(item['order_subtotal'])),
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(
+                        product['product_name'],
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                      ),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text("Quantity: $qty x ${currencyFormatter.format(finalPrice)}"),
+                          if (discountAmount > 0) ...[
+                            Row(
+                              children: [
+                                Text(
+                                  currencyFormatter.format(unitPrice),
+                                  style: const TextStyle(
+                                    decoration: TextDecoration.lineThrough,
+                                    color: Colors.grey,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  "Diskon ${currencyFormatter.format(discountAmount)}",
+                                  style: const TextStyle(
+                                    color: Colors.red,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ],
+                      ),
+                      trailing: Text(
+                        currencyFormatter.format(subtotal),
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.blueAccent),
+                      ),
                     );
                   },
                 ),
@@ -401,7 +571,7 @@ class _PosPaymentPageState extends State<PosPaymentPage> {
                           children: [
                             Text(_kembalian < 0 ? "KURANG:" : "KEMBALIAN:", style: TextStyle(fontWeight: FontWeight.bold, color: _kembalian < 0 ? Colors.red : Colors.green)),
                             Text(
-                              NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0).format(_kembalian.abs()),
+                              currencyFormatter.format(_kembalian.abs()),
                               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: _kembalian < 0 ? Colors.red : Colors.green),
                             ),
                           ],

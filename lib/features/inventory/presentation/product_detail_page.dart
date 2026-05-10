@@ -126,7 +126,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(color: Colors.orange, borderRadius: BorderRadius.circular(8)),
                 child: Text(
-                  "Hemat ${NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0).format(_product!['discounts']['discount_value'])}",
+                  "Hemat ${_product!['discounts']['discount_value']}%",
                   style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
                 ),
               )

@@ -59,7 +59,7 @@ class _PosPageState extends State<PosPage> {
     try {
       final data = await _supabase
         .from('orders')
-        .select('*, employees(employee_name)')
+        .select('*, employees(employee_name), customers(customer_name)')
         .eq('order_status', 'pending')
         .order('created_at', ascending: false);
 
@@ -104,6 +104,7 @@ class _PosPageState extends State<PosPage> {
                 final order = _pendingOrders[index];
                 final String orderId = order['order_id'].toString();
                 final String salesName = order['employees']?['employee_name'] ?? 'Tidak diketahui';
+                final String customerName = order['customers']?['customer_name'] ?? 'Tidak diketahui';
 
                 final double total = (order['total_price'] as num).toDouble();
                 final String formattedTotal = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0).format(total);
@@ -127,6 +128,7 @@ class _PosPageState extends State<PosPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const SizedBox(height: 4),
+                        Text("Customer: $customerName"),
                         Text("Sales: $salesName"),
                         Text("Waktu: $timeString", style: TextStyle(color: Colors.grey[600], fontSize: 12)),
                       ],

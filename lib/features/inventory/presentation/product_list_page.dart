@@ -562,6 +562,8 @@ class _ProductListPageState extends State<ProductListPage> {
                       final double originalPrice = (product['product_price'] as num).toDouble();
                       final double finalPrice = PriceCalculator.getFinalPrice(product);
                       final bool isDiscounted = PriceCalculator.hasActiveDiscount(product);
+                      // print("$product -- $originalPrice -- $finalPrice -- $isDiscounted");
+
                       final String imageUrl =
                           product['product_picture_url'] ?? '';
                       final String categoryName =
@@ -690,7 +692,7 @@ class _ProductListPageState extends State<ProductListPage> {
                                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                     decoration: BoxDecoration(color: Colors.orange, borderRadius: BorderRadius.circular(4)),
                                     child: Text(
-                                      "Hemat ${NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0).format(product['discounts']['discount_value'])}",
+                                      "Hemat ${product['discounts']['discount_value']}%",
                                       style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)
                                     ),
                                   ),
