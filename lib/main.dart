@@ -3,11 +3,13 @@ import 'package:go_router/go_router.dart';
 import 'package:hore_app/features/transaction/presentation/pos_payment_page.dart';
 // import 'package:path/path.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 import 'package:hore_app/features/auth/presentation/auth_gate.dart';
 import 'features/auth/presentation/login_page.dart';
 import 'dashboard_page.dart';
 import 'features/employees/presentation/employee_list_page.dart';
+import 'features/employees/presentation/activity_log_page.dart';
 import 'features/inventory/presentation/add_product_page.dart';
 import 'features/inventory/presentation/product_list_page.dart';
 import 'features/inventory/presentation/edit_product_page.dart';
@@ -35,6 +37,11 @@ final go_router = GoRouter(
     GoRoute(
       path: '/dashboard',
       builder: (context, state) => const DashboardPage(),
+    ),
+
+    GoRoute(
+      path: '/activity-log',
+      builder: (context, state) => const ActivityLogPage(),
     ),
 
     // Employee Management
@@ -106,6 +113,8 @@ final go_router = GoRouter(
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await initializeDateFormatting('id_ID', null);
 
   // Supabase Initialization
   await Supabase.initialize(

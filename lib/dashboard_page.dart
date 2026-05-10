@@ -1,6 +1,6 @@
 // import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
-import 'package:hore_app/core/utils/printer_settings.dart';
+import 'package:hore_app/features/employees/presentation/activity_log_page.dart';
 import 'package:hore_app/features/transaction/data/sales_order_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
@@ -11,10 +11,6 @@ import 'features/transaction/data/sync_service.dart';
 import 'core/services/hybrid_validation_service.dart';
 
 class DashboardPage extends StatefulWidget {
-  // Get data from login page
-  // final Map<String, dynamic> userData;
-
-  // const DashboardPage({super.key, required this.userData});
   const DashboardPage({super.key});
 
   @override
@@ -96,37 +92,6 @@ class _DashboardPageState extends State<DashboardPage> {
     }
   }
 
-  // Future<void> _enforceSecurityGate() async {
-  //   final gatekeeper = HybridValidationService();
-  //   setState(() => _securityStatus = "Memeriksa Wi-Fi Toko & Sinyal GPS...");
-
-  //   try {
-  //     final int employeeId = widget.userData['id'] ?? 0;
-  //     final String employeeName = widget.userData['name'] ?? 'Unknown';
-  //     final String employeeRole = widget.userData['role'] ?? 'Unknown';
-  //     bool isValid = await gatekeeper.validateAccess(employeeId, employeeName, employeeRole);
-
-  //     if (isValid && mounted) {
-  //       setState(() {
-  //         _isCheckingSecurity = false;
-  //       });
-
-  //       final role = widget.userData['role'];
-  //       if (role == 'sales') {
-  //         SyncService().syncOfflineOrdersToSupabase().then((_) {
-  //           print("Auto-Sync Sales Selesai Dijalankan.");
-  //         }).catchError((e) {
-  //           print("Auto-Sync Error: $e");
-  //         });
-  //       }
-  //     }
-  //   } catch (e) {
-  //     if (mounted) {
-  //       _showAccessDeniedDialog(e.toString());
-  //     }
-  //   } 
-  // }
-
   void _showAccessDeniedDialog(String reason) {
     showDialog(
       context: context,
@@ -177,10 +142,6 @@ class _DashboardPageState extends State<DashboardPage> {
         ),
       );
     }
-    
-    // final String name = widget.userData['name'] ?? 'Admin';
-    // final String role = widget.userData['role'] ?? 'admin';
-    // final bool isTrusted = widget.userData['isTrusted'] ?? false;
 
     final String displayRole = _employeeRole[0].toUpperCase() + _employeeRole.substring(1);
 
@@ -240,6 +201,21 @@ class _DashboardPageState extends State<DashboardPage> {
               ),
             ],
 
+            // MENU 4: Log Activity
+            if (_employeeRole == 'owner')
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.history_rounded, color: Colors.indigo),
+              title: const Text('Log Aktivitas Pegawai', style: TextStyle(fontWeight: FontWeight.bold)),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ActivityLogPage()),
+                );
+              },
+            ),
+
             // MENU 4: Manage Employee
             if (_isTrusted || _employeeRole == 'owner') ...[
               const Divider(),
@@ -257,19 +233,19 @@ class _DashboardPageState extends State<DashboardPage> {
             ],
 
             // MENU 5: Printer Settings
-            if (_employeeRole == 'cashier' || _employeeRole == 'owner')...[
-              const Divider(),
-              ListTile(
-                leading: const Icon(Icons.print, color: Colors.green),
-                title: const Text('Printer Settings', style: TextStyle(fontWeight: FontWeight.bold)),
-                onTap: () {
-                  Navigator.push(
-                    context, 
-                    MaterialPageRoute(builder: (context) => const PrinterSettings()),
-                  );
-                },
-              ),
-            ],
+            // if (_employeeRole == 'cashier' || _employeeRole == 'owner')...[
+            //   const Divider(),
+            //   ListTile(
+            //     leading: const Icon(Icons.print, color: Colors.green),
+            //     title: const Text('Printer Settings', style: TextStyle(fontWeight: FontWeight.bold)),
+            //     onTap: () {
+            //       Navigator.push(
+            //         context, 
+            //         MaterialPageRoute(builder: (context) => const PrinterSettings()),
+            //       );
+            //     },
+            //   ),
+            // ],
 
             Divider(),
 
