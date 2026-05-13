@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hore_app/features/reports/data/report_repository.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -10,7 +11,7 @@ class ActivityLogPage extends StatefulWidget {
 }
 
 class _ActivityLogPageState extends State<ActivityLogPage> {
-  final SupabaseClient supabase = Supabase.instance.client;
+  final ReportRepository _repository = ReportRepository();
 
   List<Map<String, dynamic>> _logs = [];
   bool _isLoading = true;
@@ -26,45 +27,32 @@ class _ActivityLogPageState extends State<ActivityLogPage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        _fetchLogs();
-      }
+      if (mounted) _fetchLogs();
     });
   }
 
   Future<void> _fetchLogs() async {
     if (!mounted) return;
-    
     setState(() => _isLoading = true);
 
     try {
-      final DateTime startOfDay = DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day);
-      final DateTime endOfDay = DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day, 23, 59, 59, 999);
+      final fetchedLogs = await _repository.getActivityLogs(
+        date: _selectedDate,
+        page: _currentPage,
+        pageSize: _pageSize,
+      );
 
-      final int from = _currentPage * _pageSize;
-      final int to = from + _pageSize - 1;
-
-      final data = await supabase
-        .from('activity_logs')
-        .select()
-        .gte('created_at', startOfDay.toUtc().toIso8601String())
-        .lte('created_at', endOfDay.toUtc().toIso8601String())
-        .order('created_at', ascending: false)
-        .range(from, to);
-      
-      final fetchedLogs = List<Map<String, dynamic>>.from(data);
-
-      setState(() {
-        _logs = fetchedLogs;
-        _hasMoreData = fetchedLogs.length == _pageSize;
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _logs = fetchedLogs;
+          _hasMoreData = fetchedLogs.length == _pageSize;
+          _isLoading = false;
+        });
+      }
     } catch (e) {
       setState(() => _isLoading = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal memuat log: $e')),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
       }
     }
   }

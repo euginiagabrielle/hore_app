@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../data/product_repository.dart';
-import '../../../core/utils/price_calculator.dart';
+import '../management/data/product_repository.dart';
+import '../../core/utils/price_calculator.dart';
 
 class ProductDetailPage extends StatefulWidget {
   final String productCode;
@@ -126,7 +126,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(color: Colors.orange, borderRadius: BorderRadius.circular(8)),
                 child: Text(
-                  "Hemat ${_product!['discounts']['discount_value']}%",
+                  "Diskon ${_product!['discounts']['discount_value']}%",
                   style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
                 ),
               )

@@ -1,21 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:hore_app/features/transaction/presentation/pos_payment_page.dart';
-// import 'package:path/path.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 import 'package:hore_app/features/auth/presentation/auth_gate.dart';
 import 'features/auth/presentation/login_page.dart';
+
 import 'dashboard_page.dart';
-import 'features/employees/presentation/employee_list_page.dart';
-import 'features/employees/presentation/activity_log_page.dart';
-import 'features/inventory/presentation/add_product_page.dart';
-import 'features/inventory/presentation/product_list_page.dart';
-import 'features/inventory/presentation/edit_product_page.dart';
-import 'features/inventory/presentation/qr_scanner_page.dart';
-import 'features/inventory/presentation/product_detail_page.dart';
+import 'features/management/presentation/management_dashboard_page.dart'; 
+import 'features/management/presentation/category_management_page.dart';
+import 'features/management/presentation/payment_method_management_page.dart';
+import 'features/management/presentation/discount_management_page.dart';
+import 'features/management/presentation/specification_management_page.dart';
+import 'features/management/presentation/customer_managemt_page.dart';
+import 'features/management/presentation/employee_management_page.dart';
+
+import 'features/management/presentation/edit_product_page.dart';
+import 'features/management/presentation/add_product_page.dart';
+import 'features/management/presentation/product_management_page.dart';
+
+import 'features/reports/presentation/report_dashboard_page.dart';
+import 'features/reports/presentation/order_history_page.dart';
+import 'features/reports/presentation/activity_log_page.dart';
+
+import 'features/catalog/product_list_page.dart';
+import 'features/catalog/qr_scanner_page.dart';
+import 'features/catalog/product_detail_page.dart';
+
 import 'features/transaction/presentation/pos_page.dart';
+import 'features/transaction/presentation/pos_payment_page.dart';
 import 'features/transaction/presentation/checkout_page.dart';
 
 final go_router = GoRouter(
@@ -39,15 +52,28 @@ final go_router = GoRouter(
       builder: (context, state) => const DashboardPage(),
     ),
 
+    // Reports
+    GoRoute(
+      path: '/reports',
+      builder: (context, state) => const ReportDashboardPage(),
+    ),
+
+    // Order History
+    GoRoute(
+      path: '/order-history',
+      builder: (context, state) => const OrderHistoryPage(),
+    ),
+
+    // Activity Log
     GoRoute(
       path: '/activity-log',
       builder: (context, state) => const ActivityLogPage(),
     ),
 
-    // Employee Management
+    // Management Dashboard
     GoRoute(
-      path: '/employees',
-      builder: (context, state) => const EmployeeListPage(),
+      path: '/management',
+      builder: (context, state) => const ManagementDashboardPage(),
     ),
 
     // Product Management
@@ -64,9 +90,51 @@ final go_router = GoRouter(
       }
     ),
 
-    // Product View
+    // Product Management
     GoRoute(
-      path: '/products',
+      path: '/manage-product',
+      builder: (context, state) => const ProductManagementPage(),
+    ),
+
+    // Category Management
+    GoRoute(
+      path: '/manage-category',
+      builder: (context, state) => const CategoryManagementPage(),
+    ),
+
+    // Payment Method Management
+    GoRoute(
+      path: '/manage-payment-method',
+      builder: (context, state) => const PaymentMethodManagementPage(),
+    ),
+
+    // Discount Management
+    GoRoute(
+      path: '/manage-discount',
+      builder: (context, state) => const DiscountManagementPage(),
+    ),
+
+    // Specification Management
+    GoRoute(
+      path: '/manage-specification',
+      builder: (context, state) => const SpecificationManagementPage()
+    ),
+
+    // Customer Management
+    GoRoute(
+      path: '/manage-customer',
+      builder: (context, state) => const CustomerManagemtPage()
+    ),
+
+    // Employee Management
+    GoRoute(
+      path: '/employees',
+      builder: (context, state) => const EmployeeManagementPage(),
+    ),
+
+    // Katalog Product
+    GoRoute(
+      path: '/catalog',
       builder: (context, state) {
         final String role = (state.extra as String?) ?? 'sales';
         return ProductListPage(userRole: role);

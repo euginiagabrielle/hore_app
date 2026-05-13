@@ -1,10 +1,9 @@
-// import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:hore_app/features/employees/presentation/activity_log_page.dart';
-import 'package:hore_app/features/transaction/data/sales_order_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hore_app/main.dart';
+import 'package:hore_app/features/transaction/data/sales_order_service.dart';
 
 import 'features/auth/presentation/change_password_dialog.dart';
 import 'features/transaction/data/sync_service.dart';
@@ -18,7 +17,6 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
-  // final SyncService _syncService = SyncService();
   bool _isCheckingSecurity = true;
   String _securityStatus = "Menginisialisasi Protokol Keamanan...";
 
@@ -31,15 +29,6 @@ class _DashboardPageState extends State<DashboardPage> {
   void initState() {
     super.initState();
     _initializeDashboard();
-    // _enforceSecurityGate();
-    // // run sync when dashboard is just opened
-    // _syncService.syncOfflineOrdersToSupabase();
-    // // Set radar: if the signal has suddenly change from offline to online -> run sync again
-    // Connectivity().onConnectivityChanged.listen((List<ConnectivityResult> results) {
-    //   if(!results.contains(ConnectivityResult.none)) {
-    //     _syncService.syncOfflineOrdersToSupabase();
-    //   }
-    // });
   }
 
   Future<void> _initializeDashboard() async {
@@ -79,9 +68,9 @@ class _DashboardPageState extends State<DashboardPage> {
 
         if (_employeeRole == 'sales') {
           SyncService().syncOfflineOrdersToSupabase().then((_) {
-            print("Auto-Sync Sales Selesai Dijalankan.");
+            debugPrint("Auto-Sync Sales Selesai Dijalankan.");
           }).catchError((e) {
-            print("Auto-Sync Error: $e");
+            debugPrint("Auto-Sync Error: $e");
           });
         }
       }
@@ -145,154 +134,195 @@ class _DashboardPageState extends State<DashboardPage> {
 
     final String displayRole = _employeeRole[0].toUpperCase() + _employeeRole.substring(1);
 
+    // Akses Logika
+    final bool isDesktop = 
+        defaultTargetPlatform == TargetPlatform.windows || 
+        defaultTargetPlatform == TargetPlatform.macOS || 
+        defaultTargetPlatform == TargetPlatform.linux;
+    final bool isMobile = !isDesktop;
+
+    final bool isOwnerOrTrusted = _employeeRole == 'owner' || _isTrusted;
+    final bool canAccessPos = (_employeeRole == 'cashier' || _employeeRole == 'owner') && isDesktop;
+    final bool canScanQr = isMobile;
+
     return Scaffold(
       appBar: AppBar(
-        title: Text("Dashboard $displayRole"),
-        backgroundColor: Colors.blueAccent,
-        foregroundColor: Colors.white,
-      ),
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
+        title: Row(
           children: [
-            UserAccountsDrawerHeader(
-              accountName: Text(_employeeName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-              accountEmail: Text(_employeeRole.toUpperCase()),
-              currentAccountPicture: CircleAvatar(
-                backgroundColor: Colors.white,
-                child: Text(_employeeName[0].toUpperCase(), style: const TextStyle(fontSize: 24, color: Colors.blueAccent, fontWeight: FontWeight.bold)),
-              ),
-              decoration: BoxDecoration(color: Colors.blueAccent),
+            Image.asset(
+              'assets/logo_hore.png',
+              height: 32,
+              fit: BoxFit.contain,
             ),
-
-            // MENU 1: Manage Product
-            ListTile(
-              leading: const Icon(Icons.inventory, color: Colors.blue),
-              title: const Text('Manajemen Produk',style: TextStyle(fontWeight: FontWeight.bold)),
-              onTap: () {
-                Navigator.pop(context);
-                context.push('/products', extra: _employeeRole);
-              },
-            ),
-
-            // MENU 2: Scan QR
-            if (_employeeRole == 'sales' || _employeeRole == 'owner')...[
-              const Divider(),
-              ListTile(
-                leading: const Icon(Icons.qr_code_scanner, color: Colors.purple),
-                title: const Text('Scan QR Produk', style: TextStyle(fontWeight: FontWeight.bold)),
-                onTap: () {
-                  Navigator.pop(context);
-                  context.push('/scan-qr');
-                },
-              ),
-            ],
-
-            // MENU 3: POS -- NANTI TAMPILAN SALES CUMA BISA BUAT PESANAN BUAT SAMPE KE KASIR, NANTI KASIR YG URUS TRANSAKSI SAMPAI PEMBAYARAN
-            if (_employeeRole == 'sales' || _employeeRole == 'cashier' || _employeeRole == 'owner')...[
-              const Divider(),
-              ListTile(
-                leading: const Icon(Icons.point_of_sale, color: Colors.green),
-                title: const Text('Kasir / Transaksi', style: TextStyle(fontWeight: FontWeight.bold)),
-                onTap: () {
-                  Navigator.pop(context);
-                  context.push('/pos');
-                },
-              ),
-            ],
-
-            // MENU 4: Log Activity
-            if (_employeeRole == 'owner')
-            const Divider(),
-            ListTile(
-              leading: const Icon(Icons.history_rounded, color: Colors.indigo),
-              title: const Text('Log Aktivitas Pegawai', style: TextStyle(fontWeight: FontWeight.bold)),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const ActivityLogPage()),
-                );
-              },
-            ),
-
-            // MENU 4: Manage Employee
-            if (_isTrusted || _employeeRole == 'owner') ...[
-              const Divider(),
-              ListTile(
-                leading: const Icon(Icons.people_alt_rounded, color: Colors.redAccent),
-                title: const Text(
-                  'Manajemen Pegawai',
-                  style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold),
-                ),
-                onTap: () {
-                  Navigator.pop(context);
-                  context.push('/employees');
-                },
-              ),
-            ],
-
-            // MENU 5: Printer Settings
-            // if (_employeeRole == 'cashier' || _employeeRole == 'owner')...[
-            //   const Divider(),
-            //   ListTile(
-            //     leading: const Icon(Icons.print, color: Colors.green),
-            //     title: const Text('Printer Settings', style: TextStyle(fontWeight: FontWeight.bold)),
-            //     onTap: () {
-            //       Navigator.push(
-            //         context, 
-            //         MaterialPageRoute(builder: (context) => const PrinterSettings()),
-            //       );
-            //     },
-            //   ),
-            // ],
-
-            Divider(),
-
-            // MENU 6: Change Password
-            ListTile(
-              leading: const Icon(Icons.lock_reset),
-              title: const Text("Ganti Password", style: TextStyle(fontWeight: FontWeight.bold)),
-              onTap: () {
-                Navigator.pop(context);
-                showDialog(
-                  context: context,
-                  builder: (context) => const ChangePasswordDialog(),
-                );
-              },
-            ),
-
-            Divider(),
-
-            // MENU 7: Logout
-            ListTile(
-              leading: Icon(Icons.logout, color: Colors.red),
-              title: const Text('Logout', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
-              onTap: () async {
-                await supabase.auth.signOut();
-                if (context.mounted) {
-                  context.go('/');
-                }
-              },
-            ),
+            const SizedBox(width: 12),
+            const Icon(Icons.storefront, color: Colors.white, size: 32),
+            const SizedBox(width: 12),
+            const Text("HORE POS", style: TextStyle(fontWeight: FontWeight.bold)),
           ],
         ),
+        backgroundColor: Colors.blueAccent,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        actions: [
+          // MENU PROFIL
+          PopupMenuButton<String>(
+            tooltip: "Menu Akun",
+            offset: const Offset(0, 45),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            icon: const CircleAvatar(
+              backgroundColor: Colors.white,
+              child: Icon(Icons.person, color: Colors.blueAccent),
+            ),
+            onSelected: (value) async {
+              if (value == 'password') {
+                showDialog(context: context, builder: (context) => const ChangePasswordDialog());
+              } else if (value == 'logout') {
+                await Supabase.instance.client.auth.signOut();
+                if (context.mounted) context.go('/');
+              }
+            },
+            itemBuilder: (BuildContext context) => [
+              PopupMenuItem(
+                enabled: false,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(_employeeName, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+                    Text(displayRole, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                  ],
+                ),
+              ),
+              const PopupMenuDivider(),
+              const PopupMenuItem(
+                value: 'password',
+                child: Row(children: [Icon(Icons.lock_reset, color: Colors.orange, size: 20), SizedBox(width: 8), Text("Ganti Password")]),
+              ),
+              const PopupMenuItem(
+                value: 'logout',
+                child: Row(children: [Icon(Icons.logout, color: Colors.red, size: 20), SizedBox(width: 8), Text("Logout", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold))]),
+              ),
+            ],
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
+      
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // HEADER WELCOME
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(colors: [Colors.blueAccent, Colors.lightBlue.shade400]),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [BoxShadow(color: Colors.blue.withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 5))],
+                ),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 30,
+                      backgroundColor: Colors.white,
+                      child: Text(_employeeName[0].toUpperCase(), style: const TextStyle(fontSize: 28, color: Colors.blueAccent, fontWeight: FontWeight.bold)),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text("Halo, $_employeeName!", style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Text(displayRole, style: const TextStyle(fontSize: 14, color: Colors.white70)),
+                              if (_isTrusted) ...[
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(color: Colors.greenAccent, borderRadius: BorderRadius.circular(4)),
+                                  child: const Text("TRUSTED", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.black)),
+                                )
+                              ]
+                            ],
+                          ),
+                        ],
+                      ),
+                    )
+                  ],
+                ),
+              ),
 
-      body: Center(
+              const SizedBox(height: 30),
+              const Text("Akses Cepat", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87)),
+              const SizedBox(height: 16),
+
+              GridView.count(
+                crossAxisCount: MediaQuery.of(context).size.width > 600 ? 4 : 2, // 4 kotak untuk Web/Tablet, 2 untuk HP
+                childAspectRatio: MediaQuery.of(context).size.width > 600 ? 1.2 : 0.9,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                children: [
+                  _buildQuickActionCard(context, "Katalog Produk", Icons.inventory_2_rounded, Colors.blue, '/catalog', extra: _employeeRole),
+                  
+                  if (canAccessPos)
+                    _buildQuickActionCard(context, "Kasir / Transaksi", Icons.point_of_sale_rounded, Colors.green, '/pos'),
+                  
+                  if (canScanQr)
+                    _buildQuickActionCard(context, "Scan QR", Icons.qr_code_scanner_rounded, Colors.purple, '/scan-qr'),
+                  
+                  if (isOwnerOrTrusted)
+                    _buildQuickActionCard(context, "Pusat Manajemen", Icons.admin_panel_settings_rounded, Colors.redAccent, '/management'),
+                  
+                  if (isOwnerOrTrusted)
+                    _buildQuickActionCard(context, "Pusat Laporan", Icons.analytics_rounded, Colors.indigo, '/reports'),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // WIDGET MENU
+  Widget _buildQuickActionCard(BuildContext context, String title, IconData icon, Color color, String route, {Object? extra}) {
+    return InkWell(
+      onTap: () => context.push(route, extra: extra),
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: color.withValues(alpha: 0.3), width: 1.5),
+        ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.storefront, size: 100, color: Colors.blueAccent),
-            const SizedBox(height: 20),
-            Text("Selamat Datang, $_employeeName!", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-            SizedBox(height: 10),
-            Text("Anda login sebagai $displayRole", style: TextStyle(fontSize: 16, color: Colors.grey[600])),
-            if (_isTrusted)
-              const Padding(
-                padding: EdgeInsets.only(top: 8.0),
-                child: Chip(label: Text("Trusted Staff", style: TextStyle(color: Colors.white)), backgroundColor: Colors.green),
-              )
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white, 
+                shape: BoxShape.circle, 
+                boxShadow: [BoxShadow(color: color.withValues(alpha: 0.2), blurRadius: 8)]
+              ),
+              child: Icon(icon, size: 32, color: color),
+            ),
+            const SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4.0),
+              child: Text(
+                title,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, height: 1.2, color: color.withValues(alpha: 0.9)),
+              ),
+            ),
           ],
         ),
       ),
