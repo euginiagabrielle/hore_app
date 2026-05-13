@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../management/data/product_repository.dart';
 import '../../core/utils/price_calculator.dart';
+import '../../../core/utils/error_handler.dart';
 
 class ProductDetailPage extends StatefulWidget {
   final String productCode;
@@ -39,7 +40,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e")));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(ErrorHandler.getMessage(e))));
       }
     }
   }
@@ -86,7 +87,23 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
             if (imageUrl.isNotEmpty)
               ClipRRect(
                 borderRadius: BorderRadiusGeometry.circular(12),
-                child: Image.network(imageUrl, height: 250, fit: BoxFit.contain),
+                child: Image.network(imageUrl, height: 250, fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      height: 250,
+                      width: double.infinity,
+                      color: Colors.grey.shade200,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: const [
+                          Icon(Icons.wifi_off, size: 50, color: Colors.grey),
+                          SizedBox(height: 8),
+                          Text("Gambar tidak dapat dimuat", style: TextStyle(color: Colors.grey)),
+                        ],
+                      ),
+                    );
+                  },
+                ),
               )
             else
               Container(

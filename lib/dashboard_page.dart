@@ -2,12 +2,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
-import 'package:hore_app/main.dart';
 import 'package:hore_app/features/transaction/data/sales_order_service.dart';
 
 import 'features/auth/presentation/change_password_dialog.dart';
 import 'features/transaction/data/sync_service.dart';
 import 'core/services/hybrid_validation_service.dart';
+import 'core/utils/error_handler.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -23,6 +23,7 @@ class _DashboardPageState extends State<DashboardPage> {
   int _employeeId = 0;
   String _employeeName = "Loading...";
   String _employeeRole = "Unknown";
+  String _employeeEmail = "";
   bool _isTrusted = false;
 
   @override
@@ -52,6 +53,7 @@ class _DashboardPageState extends State<DashboardPage> {
       _employeeName = userData['employee_name'] ?? 'Unknown';
       _employeeRole = userData['employee_role'] ?? 'Unknown';
       _isTrusted = userData['is_trusted'] ?? false;
+      _employeeEmail = user.email ?? '-';
 
       SalesOrderService().setEmployee(_employeeId, _employeeName);
 
@@ -76,7 +78,7 @@ class _DashboardPageState extends State<DashboardPage> {
       }
     } catch (e) {
       if (mounted) {
-        _showAccessDeniedDialog(e.toString());
+        _showAccessDeniedDialog(ErrorHandler.getMessage(e));
       }
     }
   }
@@ -155,8 +157,6 @@ class _DashboardPageState extends State<DashboardPage> {
               fit: BoxFit.contain,
             ),
             const SizedBox(width: 12),
-            const Icon(Icons.storefront, color: Colors.white, size: 32),
-            const SizedBox(width: 12),
             const Text("HORE POS", style: TextStyle(fontWeight: FontWeight.bold)),
           ],
         ),
@@ -188,6 +188,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(_employeeName, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+                    Text(_employeeEmail, style: const TextStyle(fontSize: 11, color: Colors.blueAccent)),
                     Text(displayRole, style: const TextStyle(fontSize: 12, color: Colors.grey)),
                   ],
                 ),

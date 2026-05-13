@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hore_app/features/reports/data/report_repository.dart';
 import 'package:intl/intl.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../core/utils/error_handler.dart';
 
 class ActivityLogPage extends StatefulWidget {
   const ActivityLogPage({super.key});
@@ -52,7 +52,7 @@ class _ActivityLogPageState extends State<ActivityLogPage> {
     } catch (e) {
       setState(() => _isLoading = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(ErrorHandler.getMessage(e))));
       }
     }
   }

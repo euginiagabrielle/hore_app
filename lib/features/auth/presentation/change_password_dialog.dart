@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hore_app/main.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../core/utils/error_handler.dart';
 
 class ChangePasswordDialog extends StatefulWidget {
   const ChangePasswordDialog({super.key});
@@ -38,7 +39,7 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text(ErrorHandler.getMessage(e)), backgroundColor: Colors.red),
         );
       }
     } finally {

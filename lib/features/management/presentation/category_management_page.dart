@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../data/category_repository.dart';
+import '../../../core/utils/error_handler.dart';
 
 class CategoryManagementPage extends StatefulWidget {
   const CategoryManagementPage({super.key});
@@ -38,7 +39,7 @@ class _CategoryManagementPageState extends State<CategoryManagementPage> {
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(ErrorHandler.getMessage(e))));
       }
     }
   }
@@ -95,7 +96,7 @@ class _CategoryManagementPageState extends State<CategoryManagementPage> {
                     } catch (e) {
                       setDialogState(() => isSaving = false);
                       if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(ErrorHandler.getMessage(e)), backgroundColor: Colors.red));
                       }
                     }
                   },

@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
-// import 'package:shared_preferences/shared_preferences.dart';
-// import 'package:path/path.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
-// import 'package:go_router/go_router.dart';
+import '../../../core/utils/error_handler.dart';
 
 class PosPaymentPage extends StatefulWidget {
   final int orderId;
@@ -81,7 +79,7 @@ class _PosPaymentPageState extends State<PosPaymentPage> {
 
       print("ORDER DATA: \n$data");
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(this.context).showSnackBar(SnackBar(content: Text("Error: $e")));
+      if (mounted) ScaffoldMessenger.of(this.context).showSnackBar(SnackBar(content: Text(ErrorHandler.getMessage(e))));
       setState(() => _isLoading = false);
       print("ERROR FETCH ORDER: $e");
     }
@@ -119,11 +117,6 @@ class _PosPaymentPageState extends State<PosPaymentPage> {
     setState(() => _isProcessingPay = true);
 
     try {
-      // await _supabase.from('orders').update({
-      //   'payment_method_id': _selectedPaymentMethodId,
-      //   'order_status': 'paid'
-      // }).eq('order_id', widget.orderId);
-
       await _supabase.rpc('process_payment', params: {
         'p_order_id': widget.orderId,
         'p_payment_method_id': _selectedPaymentMethodId,
@@ -145,7 +138,7 @@ class _PosPaymentPageState extends State<PosPaymentPage> {
         ));
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(this.context).showSnackBar(SnackBar(content: Text("Gagal memproses $e"), backgroundColor: Colors.red));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Gagal memproses $e"), backgroundColor: Colors.red));
     } finally {
       if (mounted) setState(() => _isProcessingPay = false);
     }
@@ -221,17 +214,6 @@ class _PosPaymentPageState extends State<PosPaymentPage> {
                 final double subtotal = (item['order_subtotal'] as num).toDouble();
                 final double discount = (item['discount_amount'] as num?)?.toDouble() ?? 0;
                 final double lineDiscount = discount * qty;
-
-                // return pw.Padding(
-                //   padding: const pw.EdgeInsets.only(bottom: 6),
-                //   child: pw.Row(
-                //     mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                //     children: [
-                //       pw.Expanded(child: pw.Text("$name x$qty", style: const pw.TextStyle(fontSize: 10))),
-                //       pw.Text(subtotal, style: const pw.TextStyle(fontSize: 10)),
-                //     ],
-                //   )
-                // );
 
                 return pw.Padding(
                   padding: const pw.EdgeInsets.only(bottom: 6),
@@ -326,41 +308,14 @@ class _PosPaymentPageState extends State<PosPaymentPage> {
       ),
     );
 
-    // Direct Print
+    // Print
     try {
       await Printing.layoutPdf(
         onLayout: (PdfPageFormat format) async => doc.save(),
         name: 'Struk_Nota_${widget.orderId}',
       );
-      // final prefs = await SharedPreferences.getInstance();
-      // final printerUrl = prefs.getString('default_printer_url');
-
-      // if (printerUrl != null && printerUrl.isNotEmpty) {
-      //   // Jika printer sdh disetting, cetak
-      //   final selectedPrinter = Printer(url: printerUrl);
-      //   // await Printing.directPrintPdf(
-      //   //   printer: selectedPrinter, 
-      //   //   onLayout: (PdfPageFormat format) async => doc.save(),
-      //   //   name: 'Struk_Nota_${widget.orderId}',
-      //   // );
-      //   await Printing.layoutPdf(
-      //     onLayout: (PdfPageFormat format) async => doc.save(),
-      //     name: 'Struk_Nota_${widget.orderId}',
-      //   );
-      // } else {
-      //   // Fallback jika blm setting printer, munculkan popup
-      //   await Printing.layoutPdf(
-      //     onLayout: (PdfPageFormat format) async => doc.save(),
-      //     name: 'Struk_Nota_${widget.orderId}',
-      //   );
-      // }
     } catch (e) {
       print("Gagal cetak struk: $e");
-      // Fallback jika print gagal
-      // await Printing.layoutPdf(
-      //   onLayout: (PdfPageFormat format) async => doc.save(),
-      //   name: 'Struk_Nota_${widget.orderId},'
-      // );
     }
   }
 
@@ -456,13 +411,6 @@ class _PosPaymentPageState extends State<PosPaymentPage> {
                   padding: const EdgeInsets.all(16),
                   itemCount: _orderDetails.length,
                   itemBuilder: (context, index) {
-                    // final item = _orderDetails[index];
-                    // final String price = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0).format(item['order_price']);
-                    // return ListTile(
-                    //   title: Text(item['products']['product_name'], style: const TextStyle(fontWeight: FontWeight.bold)),
-                    //   subtitle: Text("${item['order_quantity']} x $price"),
-                    //   trailing: Text(NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0).format(item['order_subtotal'])),
-                    // );
                     final item = _orderDetails[index];
                     final product = item['products'];
                     final double unitPrice = (item['unit_price'] as num).toDouble();

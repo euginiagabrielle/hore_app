@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../data/product_repository.dart';
+import '../../../core/utils/error_handler.dart';
 
 class EditProductPage extends StatefulWidget {
   final Map<String, dynamic> product;
@@ -128,7 +129,7 @@ class _EditProductPageState extends State<EditProductPage> {
         Navigator.pop(context, true);
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red,));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(ErrorHandler.getMessage(e)), backgroundColor: Colors.red,));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -154,7 +155,17 @@ class _EditProductPageState extends State<EditProductPage> {
                   child: _imageBytes != null
                     ? (kIsWeb ? Image.network(_selectedImage!.path, fit: BoxFit.cover) : Image.file(File(_selectedImage!.path), fit: BoxFit.cover))
                     : (_existingImageUrl != null && _existingImageUrl!.isNotEmpty)
-                      ? Image.network(_existingImageUrl!, fit: BoxFit.cover)
+                      ? Image.network(_existingImageUrl!, fit: BoxFit.cover, 
+                        errorBuilder: (context, error, stackTrace) {
+                            return const Center(
+                              child: Text(
+                                "Offline: Gagal memuat foto lama", 
+                                textAlign: TextAlign.center,
+                                style: TextStyle(color: Colors.red),
+                              ),
+                            );
+                          },
+                        )
                       : const Center(child: Text("Ketuk untuk ganti foto")),
                 ),
               ),

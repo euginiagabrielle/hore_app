@@ -1,4 +1,3 @@
-// import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:hore_app/main.dart';
 
@@ -25,7 +24,7 @@ class AuthRepository {
       if (employeeData['is_employee_active'] == false) {
         // Force logout for inactive employee
         await supabase.auth.signOut();
-        throw 'Akun tidak aktif.';
+        throw Exception('Akun Anda dinonaktifkan. Silakan hubungi Owner.');
       }
 
       return employeeData;

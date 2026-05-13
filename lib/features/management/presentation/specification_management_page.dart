@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../data/specification_repository.dart';
+import '../../../core/utils/error_handler.dart';
 
 class SpecificationManagementPage extends StatefulWidget {
   const SpecificationManagementPage({super.key});
@@ -47,7 +48,7 @@ class _SpecificationManagementPageState extends State<SpecificationManagementPag
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(ErrorHandler.getMessage(e))));
       }
     }
   }
@@ -133,7 +134,7 @@ class _SpecificationManagementPageState extends State<SpecificationManagementPag
                   }
                 } catch (e) {
                   setDialogState(() => isSaving = false);
-                  if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+                  if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(ErrorHandler.getMessage(e))));
                 }
               },
               child: isSaving ? const SizedBox(width: 15, height: 15, child: CircularProgressIndicator(strokeWidth: 2)) : const Text("Simpan"),

@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../management/data/product_repository.dart';
 import '../transaction/data/sales_order_service.dart';
 import '../../core/utils/price_calculator.dart';
+import '../../../core/utils/error_handler.dart';
 
 class ProductListPage extends StatefulWidget {
   final String userRole;
@@ -43,7 +44,7 @@ class _ProductListPageState extends State<ProductListPage> {
     } catch (e) {
       setState(() => _isLoading = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(ErrorHandler.getMessage(e))));
       }
     }
   }
@@ -316,7 +317,16 @@ class _ProductListPageState extends State<ProductListPage> {
                                 child: ClipRRect(
                                   borderRadius: BorderRadius.circular(8),
                                   child: imageUrl.isNotEmpty
-                                      ? Image.network(imageUrl, width: 50, height: 50, fit: BoxFit.cover)
+                                      ? Image.network(imageUrl, width: 50, height: 50, fit: BoxFit.cover,
+                                          errorBuilder: (context, error, stackTrace) {
+                                            return Container(
+                                              width: 50,
+                                              height: 50,
+                                              color: Colors.grey.shade300,
+                                              child: const Icon(Icons.image_not_supported, color: Colors.grey, size: 24),
+                                            );
+                                          },
+                                        )
                                       : Container(width: 50, height: 50, color: Colors.grey[300], child: const Icon(Icons.image_not_supported)),
                                 ),
                               ),

@@ -6,7 +6,7 @@ class EmployeeRepository {
   Future<List<Map<String, dynamic>>> getEmployees({required bool isOwner}) async {
     try {
       var query = _supabase
-        .from('employees')
+        .from('employee_with_emails')
         .select();
       
       if (!isOwner) {

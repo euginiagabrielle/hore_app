@@ -46,7 +46,8 @@ class HybridValidationService {
         .order('id', ascending: true);
       
       if (locationData.length < 3) {
-        throw Exception("Sistem Error: Data titik poligon kurang dari 3!");
+        // throw Exception("Sistem Error: Data titik poligon kurang dari 3!");
+        throw Exception("Pengaturan peta area toko belum lengkap. Silakan hubungi Admin atau Owner.");
       }
 
       storePolygon = locationData.map((point) {

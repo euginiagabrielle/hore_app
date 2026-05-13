@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../data/product_repository.dart';
+import '../../../core/utils/error_handler.dart';
 
 class AddProductPage extends StatefulWidget {
   const AddProductPage({super.key});
@@ -145,7 +146,7 @@ class _AddProductPageState extends State<AddProductPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text(ErrorHandler.getMessage(e)), backgroundColor: Colors.red),
         );
       }
     } finally {

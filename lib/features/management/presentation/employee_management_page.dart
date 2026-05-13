@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../data/employee_repository.dart';
+import '../../../core/utils/error_handler.dart';
 
 class EmployeeManagementPage extends StatefulWidget {
   const EmployeeManagementPage({super.key});
@@ -70,7 +71,7 @@ class _EmployeeManagementPageState extends State<EmployeeManagementPage> {
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(ErrorHandler.getMessage(e))));
       }
     }
   }
@@ -164,7 +165,7 @@ class _EmployeeManagementPageState extends State<EmployeeManagementPage> {
                   }
                 } catch (e) {
                   setDialogState(() => isSaving = false);
-                  if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
+                  if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(ErrorHandler.getMessage(e)), backgroundColor: Colors.red));
                 }
               },
               child: isSaving ? const SizedBox(width: 15, height: 15, child: CircularProgressIndicator(strokeWidth: 2)) : const Text("Simpan & Daftarkan"),
@@ -234,7 +235,7 @@ class _EmployeeManagementPageState extends State<EmployeeManagementPage> {
       // If fail, return to previous UI
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Gagal diperbarui: $e'),
+          content: Text(ErrorHandler.getMessage(e)),
           backgroundColor: Colors.red,
         ),
       );
@@ -301,6 +302,7 @@ class _EmployeeManagementPageState extends State<EmployeeManagementPage> {
                         final String name = employee['employee_name'] ?? 'No Name';
                         final String role = employee['employee_role'];
                         final bool isTargetOwner = role == 'owner';
+                        final String email = employee['email'] ?? '-';
                         final String nip = employee['nip'] ?? '-';
                         final bool isTrusted = employee['is_trusted'] ?? false;
                         final bool isActive = employee['is_employee_active'] ?? true;
@@ -337,21 +339,19 @@ class _EmployeeManagementPageState extends State<EmployeeManagementPage> {
                                             style: TextStyle(
                                               fontWeight: FontWeight.bold,
                                               fontSize: 16,
-                                              decoration: isActive
-                                                  ? null
-                                                  : TextDecoration.lineThrough,
-                                              color: isActive
-                                                  ? Colors.black
-                                                  : Colors.grey,
+                                              decoration: isActive ? null : TextDecoration.lineThrough,
+                                              color: isActive ? Colors.black : Colors.grey,
                                             ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            email,
+                                            style: TextStyle(fontSize: 13, color: Colors.blue.shade700, fontWeight: FontWeight.w500),
                                           ),
                                           const SizedBox(height: 4),
                                           Text(
                                             "NIP: $nip | Role: ${role.toUpperCase()}",
-                                            style: TextStyle(
-                                              fontSize: 12,
-                                              color: Colors.grey[700],
-                                            ),
+                                            style: TextStyle(fontSize: 12, color: Colors.grey[700]),
                                           ),
                                         ],
                                       ),
