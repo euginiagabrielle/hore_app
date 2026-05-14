@@ -3,12 +3,11 @@ import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:network_info_plus/network_info_plus.dart';
 import 'package:maps_toolkit/maps_toolkit.dart' as mp;
-// import 'package:path/path.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class HybridValidationService {
   final _supabase = Supabase.instance.client;
-  final String storeWifiBSSID = "1C:E5:04:DA:E1:88";
+  final String storeWifiBSSID = "92:a8:62:65:a1:6d";
 
   Future<bool> validateAccess(int employeeId, String employeeName, String role) async {
     if (role.toLowerCase() == 'owner') {

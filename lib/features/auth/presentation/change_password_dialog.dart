@@ -13,6 +13,7 @@ class ChangePasswordDialog extends StatefulWidget {
 class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
   final _passwordController = TextEditingController();
   bool _isLoading = false;
+  bool _obscurePassword = true;
 
   Future<void> _updatePassword() async {
     final newPassword = _passwordController.text;
@@ -53,10 +54,21 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
       title: const Text("Ganti Password"),
       content: TextField(
         controller: _passwordController,
-        obscureText: true,
-        decoration: const InputDecoration(
+        obscureText: _obscurePassword,
+        decoration: InputDecoration(
           labelText: "Password Baru",
-          border: OutlineInputBorder(),
+          border: const OutlineInputBorder(),
+          suffixIcon: IconButton(
+            icon: Icon(
+              _obscurePassword ? Icons.visibility_off : Icons.visibility,
+              color: Colors.grey,
+            ),
+            onPressed: () {
+              setState(() {
+                _obscurePassword = !_obscurePassword;
+              });
+            },
+          ),
         ),
       ),
       actions: [

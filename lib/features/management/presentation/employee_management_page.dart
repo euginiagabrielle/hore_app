@@ -81,6 +81,7 @@ class _EmployeeManagementPageState extends State<EmployeeManagementPage> {
     final nameController = TextEditingController();
     final emailController = TextEditingController();
     final passwordController = TextEditingController();
+    bool _obscurePassword = true;
     
     String selectedRole = 'sales';
     bool isSaving = false;
@@ -127,8 +128,22 @@ class _EmployeeManagementPageState extends State<EmployeeManagementPage> {
                 const SizedBox(height: 12),
                 TextField(
                   controller: passwordController,
-                  obscureText: true,
-                  decoration: const InputDecoration(labelText: "Password Sementara", border: OutlineInputBorder()),
+                  obscureText: _obscurePassword,
+                  decoration: InputDecoration(
+                    labelText: "Password Akun", 
+                    border: OutlineInputBorder(),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                        color: Colors.grey,
+                      ),
+                      onPressed: () {
+                        setDialogState(() {
+                          _obscurePassword = !_obscurePassword;
+                        });
+                      },
+                    ),
+                  ),
                 ),
               ],
             ),
