@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../data/product_repository.dart';
+import '../data/discount_repository.dart';
 import '../../../core/utils/error_handler.dart';
 
 class EditProductPage extends StatefulWidget {
@@ -16,6 +17,7 @@ class EditProductPage extends StatefulWidget {
 
 class _EditProductPageState extends State<EditProductPage> {
   final  _repo = ProductRepository();
+  final _discountRepo = DiscountRepository();
   final _formKey = GlobalKey<FormState>();
 
   late TextEditingController _nameController;
@@ -25,6 +27,9 @@ class _EditProductPageState extends State<EditProductPage> {
 
   List<Map<String, dynamic>> _categories = [];
   int? _selectedCategoryId;
+
+  List<Map<String, dynamic>> _discounts = [];
+  int? _selectedDiscountId;
 
   XFile? _selectedImage;
   Uint8List? _imageBytes;
@@ -44,14 +49,29 @@ class _EditProductPageState extends State<EditProductPage> {
     _priceController = TextEditingController(text: widget.product['product_price'].toString());
     _existingImageUrl = widget.product['product_picture_url'];
 
+    _selectedDiscountId = widget.product['discount_id'] is int
+        ? widget.product['discount_id']
+        : int.tryParse(widget.product['discount_id']?.toString() ?? '');
+
     _loadInitialData();
   }
 
   Future<void> _loadInitialData() async {
     try {
       final categories = await _repo.getCategories();
+      final allDiscounts = await _discountRepo.getDiscounts();
+      
+      final int? currentDiscountId = widget.product['discount_id'] is int
+          ? widget.product['discount_id']
+          : int.tryParse(widget.product['discount_id']?.toString() ?? '');
+
       setState(() {
         _categories = categories;
+        _discounts = allDiscounts.where((d) {
+            final bool isActive = d['is_discount_active'] == true;
+            final bool isUsedByThisProduct = d['discount_id'] == currentDiscountId;
+            return isActive || isUsedByThisProduct;
+          }).toList();
         _selectedCategoryId = widget.product['category_id'] is int
           ? widget.product['category_id']
           : int.tryParse(widget.product['category_id'].toString());
@@ -122,6 +142,7 @@ class _EditProductPageState extends State<EditProductPage> {
         newImageBytes: _imageBytes,
         newImageExtension: _selectedImage?.name.split('.').last, 
         specificationValues: specValueToSave,
+        discountId: _selectedDiscountId,
       );
 
       if (mounted) {
@@ -192,6 +213,25 @@ class _EditProductPageState extends State<EditProductPage> {
                   Expanded(child: TextFormField(controller: _priceController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: "Harga", border: OutlineInputBorder()))),
                 ],
               ),
+              const SizedBox(height: 16),
+
+              if (_discounts.isNotEmpty)
+                DropdownButtonFormField<int?>(
+                  initialValue: _selectedDiscountId,
+                  decoration: const InputDecoration(labelText: "Pilih Diskon (Opsional)", border: OutlineInputBorder()),
+                  items: [
+                    const DropdownMenuItem<int?>(value: null, child: Text("Tanpa Diskon", style: TextStyle(color: Colors.grey))),
+                    ..._discounts.map((discount) {
+                      return DropdownMenuItem<int?>(
+                        value: discount['discount_id'],
+                        child: Text("${discount['discount_name']} (${discount['discount_value']}%)"),
+                      );
+                    }).toList(),
+                  ],
+                  onChanged: (val) {
+                    setState(() => _selectedDiscountId = val);
+                  },
+                ),
               const SizedBox(height: 16),
 
               // Category & Specification

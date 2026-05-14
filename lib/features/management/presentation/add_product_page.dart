@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../data/product_repository.dart';
+import '../data/discount_repository.dart';
 import '../../../core/utils/error_handler.dart';
 
 class AddProductPage extends StatefulWidget {
@@ -13,6 +14,7 @@ class AddProductPage extends StatefulWidget {
 
 class _AddProductPageState extends State<AddProductPage> {
   final _repo = ProductRepository();
+  final _discountRepo = DiscountRepository();
   final _formKey = GlobalKey<FormState>();
 
   final _nameController = TextEditingController();
@@ -26,6 +28,10 @@ class _AddProductPageState extends State<AddProductPage> {
   File? _selectedImage;
   bool _isLoading = false;
 
+  // State for discounts
+  List<Map<String, dynamic>> _discounts = [];
+  int? _selectedDiscountId;
+
   // State for specification
   List<Map<String, dynamic>> _specifications = [];
   // Key: specification_id, Value: TextEditingController
@@ -35,7 +41,7 @@ class _AddProductPageState extends State<AddProductPage> {
   @override
   void initState() {
     super.initState();
-    _loadCategories();
+    _loadInitialData();
   }
 
   @override
@@ -50,14 +56,20 @@ class _AddProductPageState extends State<AddProductPage> {
     super.dispose();
   }
 
-  Future<void> _loadCategories() async {
+  Future<void> _loadInitialData() async {
     try {
-      final data = await _repo.getCategories();
-      setState(() => _categories = data);
+      final categories = await _repo.getCategories();
+      final discounts = await _discountRepo.getDiscounts();
+      final activeDiscounts = discounts.where((d) => d['is_discount_active'] == true).toList();
+      
+      if (mounted) {
+        setState(() {
+          _categories = categories;
+          _discounts = activeDiscounts;
+        });
+      }
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Gagal load kategori: $e')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal load data awal: $e')));
     }
   }
 
@@ -133,6 +145,7 @@ class _AddProductPageState extends State<AddProductPage> {
         price: double.parse(_priceController.text),
         imageFile: _selectedImage!,
         specificationValues: specValueToSave,
+        discountId: _selectedDiscountId,
       );
 
       if (mounted) {
@@ -240,6 +253,31 @@ class _AddProductPageState extends State<AddProductPage> {
                   ),
                 ],
               ),
+              const SizedBox(height: 16),
+
+              DropdownButtonFormField<int?>(
+                initialValue: _selectedDiscountId,
+                decoration: const InputDecoration(
+                  labelText: "Pilih Diskon (Opsional)",
+                  border: OutlineInputBorder(),
+                ),
+                items: [
+                  const DropdownMenuItem<int?>(
+                    value: null,
+                    child: Text("Tanpa Diskon", style: TextStyle(color: Colors.grey)),
+                  ),
+                  ..._discounts.map((discount) {
+                    return DropdownMenuItem<int?>(
+                      value: discount['discount_id'],
+                      child: Text("${discount['discount_name']} (${discount['discount_value']}%)"),
+                    );
+                  }).toList(),
+                ],
+                onChanged: (val) {
+                  setState(() => _selectedDiscountId = val);
+                },
+              ),
+
               const SizedBox(height: 16),
 
               _categories.isEmpty

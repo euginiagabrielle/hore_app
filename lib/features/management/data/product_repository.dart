@@ -33,6 +33,7 @@ class ProductRepository {
     required double price,
     required File imageFile,
     required Map<int, String> specificationValues,
+    int? discountId,
   }) async {
     try {
       // Upload product image
@@ -64,7 +65,7 @@ class ProductRepository {
           );
 
       final String qrImageUrl = supabase.storage
-          .from('pos-image')
+          .from('pos-images')
           .getPublicUrl(qrPath);
 
       // Save product to database
@@ -73,6 +74,7 @@ class ProductRepository {
           .insert({
             'product_code': code,
             'category_id': categoryId,
+            'discount_id': discountId,
             'product_name': name,
             'product_stock': stock,
             'product_price': price,
@@ -175,6 +177,7 @@ class ProductRepository {
     Uint8List? newImageBytes,
     String? newImageExtension,
     required Map<int, String> specificationValues,
+    int? discountId,
   }) async {
     try {
       String? updatedImageUrl;
@@ -182,7 +185,7 @@ class ProductRepository {
       // if user choose new image
       if (newImageBytes != null && newImageExtension != null) {
         final String imagePath = 'products/${DateTime.now().millisecondsSinceEpoch}.$newImageExtension';
-        await supabase.storage.from('pos-image').uploadBinary(
+        await supabase.storage.from('pos-images').uploadBinary(
           imagePath,
           newImageBytes,
           fileOptions: FileOptions(contentType: 'image/$newImageExtension', upsert: true)
@@ -196,6 +199,7 @@ class ProductRepository {
         'category_id': categoryId,
         'product_stock': stock,
         'product_price': price,
+        'discount_id': discountId,
       };
 
       if (updatedImageUrl != null) {
