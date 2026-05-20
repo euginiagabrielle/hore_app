@@ -196,8 +196,9 @@ class _EditProductPageState extends State<EditProductPage> {
               // Main data
               TextFormField(
                 controller: _codeController, 
-                readOnly: true, 
-                decoration: InputDecoration(labelText: "Kode Produk *Tidak bisa diedit", filled: true, fillColor: Colors.grey[200], border: const OutlineInputBorder())
+                // readOnly: true, 
+                decoration: const InputDecoration(labelText: "Kode Produk", border: const OutlineInputBorder()),
+                validator: (val) => val!.isEmpty ? 'Wajib diisi' : null,
               ),
               const SizedBox(height: 12),
               TextFormField(

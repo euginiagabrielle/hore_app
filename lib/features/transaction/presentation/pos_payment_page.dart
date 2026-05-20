@@ -167,6 +167,7 @@ class _PosPaymentPageState extends State<PosPaymentPage> {
     final String formattedCash = currencyFormatter.format(cashAmount);
     final String formattedKembalian = currencyFormatter.format(_kembalian > 0 ? _kembalian : 0);
     final String dateStr = DateFormat('dd MMM yyyy HH:mm').format(DateTime.now());
+    final String salesName = _orderData?['employees']?['employee_name'] ?? '-';
 
     doc.addPage(
       pw.Page(
@@ -200,6 +201,13 @@ class _PosPaymentPageState extends State<PosPaymentPage> {
                 children: [
                   pw.Text("Tanggal", style: const pw.TextStyle(fontSize: 9)),
                   pw.Text(dateStr, style: const pw.TextStyle(fontSize: 9)),
+                ]
+              ),
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Text("Sales", style: const pw.TextStyle(fontSize: 9)),
+                  pw.Text(salesName, style: const pw.TextStyle(fontSize: 9)),
                 ]
               ),
               pw.SizedBox(height: 4),

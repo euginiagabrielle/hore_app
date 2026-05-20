@@ -7,7 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 class HybridValidationService {
   final _supabase = Supabase.instance.client;
-  final String storeWifiBSSID = "92:a8:62:65:a1:6d";
+  final String storeWifiBSSID = "1c:e5:04:da:e1:88";
 
   Future<bool> validateAccess(int employeeId, String employeeName, String role) async {
     if (role.toLowerCase() == 'owner') {
@@ -85,9 +85,9 @@ class HybridValidationService {
       throw Exception("FAKE GPS TERDETEKSI!");
     }
     
-    if (position.accuracy > 20.0) {
+    if (position.accuracy > 40.0) {
       // print("Titik: $position");
-      throw Exception("Sinyal GPS tidak akurat (Toleransi: 20m, Akurasi Anda: ${position.accuracy.toStringAsFixed(1)}m).");
+      throw Exception("Sinyal GPS tidak akurat (Toleransi: 40m, Akurasi Anda: ${position.accuracy.toStringAsFixed(1)}m).");
     }
 
     // Point-in-Polygon (Margin tolerance: 10m)

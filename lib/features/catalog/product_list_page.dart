@@ -334,7 +334,7 @@ class _ProductListPageState extends State<ProductListPage> {
                           ),
 
                           title: Text(
-                            product['product_name'],
+                            "[${product['product_code']}] ${product['product_name']}",
                             style: TextStyle(fontWeight: FontWeight.bold, color: isDisabled ? Colors.grey : Colors.black),
                           ),
                           subtitle: Column(
@@ -385,6 +385,25 @@ class _ProductListPageState extends State<ProductListPage> {
                                     if (product['product_stock'] <= 0) {
                                       ScaffoldMessenger.of(context).showSnackBar(
                                         const SnackBar(content: Text("Stok Habis!"), backgroundColor: Colors.red),
+                                      );
+                                      return;
+                                    }
+
+                                    int currentQtyInCart = 0;
+                                    final existingItems = _orderService.currentItems.where(
+                                      (item) => item['product']['product_id'] == product['product_id']
+                                    );
+
+                                    if (existingItems.isNotEmpty) {
+                                      currentQtyInCart = existingItems.first['quantity'];
+                                    }
+
+                                    if (currentQtyInCart >= product['product_stock']) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text("Mencapai batas maksimal stok!"),
+                                          backgroundColor: Colors.red,
+                                        ),
                                       );
                                       return;
                                     }

@@ -115,7 +115,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
             const SizedBox(height: 16),
 
             // Product information
-            Text(_product!['product_name'], style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+            Text("[${_product!['product_code']}] ${_product!['product_name']}", style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             // Text(formattedPrice, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.orange)),
             if (isDiscounted)
