@@ -380,21 +380,24 @@ class _EmployeeManagementPageState extends State<EmployeeManagementPage> {
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
                                     // Trusted Toggle
-                                    Row(
-                                      children: [
-                                        const Text(
-                                          "Trusted Staff: ",
-                                          style: TextStyle(fontSize: 12),
-                                        ),
-                                        Switch(
-                                          value: isTrusted,
-                                          activeThumbColor: Colors.blue,
-                                          onChanged: (isActive && !isTargetOwner)
-                                              ? (val) => _toggleTrusted(id, isTrusted)
-                                              : null,
-                                        ),
-                                      ],
-                                    ),
+                                    if (role == 'admin')
+                                      Row(
+                                        children: [
+                                          const Text(
+                                            "Trusted Staff: ",
+                                            style: TextStyle(fontSize: 12),
+                                          ),
+                                          Switch(
+                                            value: isTrusted,
+                                            activeThumbColor: Colors.blue,
+                                            onChanged: (isActive && _isCurrentUserOwner && !isTargetOwner)
+                                                ? (val) => _toggleTrusted(id, isTrusted)
+                                                : null,
+                                          ),
+                                        ],
+                                      )
+                                    else
+                                      const SizedBox(width: 100),
 
                                     // Active Toggle
                                     TextButton.icon(

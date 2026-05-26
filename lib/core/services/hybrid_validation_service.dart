@@ -17,7 +17,6 @@ class HybridValidationService {
     // Primary validation: Wi-Fi Detection
     final info = NetworkInfo();
     String? currentBSSID = await info.getWifiBSSID();
-    // print(currentBSSID);
 
     if (currentBSSID != null && currentBSSID.toLowerCase() == storeWifiBSSID.toLowerCase()) {
       await _logEmployeeActivity(
@@ -86,7 +85,6 @@ class HybridValidationService {
     }
     
     if (position.accuracy > 40.0) {
-      // print("Titik: $position");
       throw Exception("Sinyal GPS tidak akurat (Toleransi: 40m, Akurasi Anda: ${position.accuracy.toStringAsFixed(1)}m).");
     }
 

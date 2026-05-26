@@ -2,8 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
-import 'package:hore_app/features/transaction/data/sales_order_service.dart';
 
+import 'package:hore_app/features/transaction/data/sales_order_service.dart';
 import 'features/auth/presentation/change_password_dialog.dart';
 import 'features/transaction/data/sync_service.dart';
 import 'core/services/hybrid_validation_service.dart';
@@ -16,7 +16,7 @@ class DashboardPage extends StatefulWidget {
   State<DashboardPage> createState() => _DashboardPageState();
 }
 
-class _DashboardPageState extends State<DashboardPage> {
+class _DashboardPageState extends State<DashboardPage> with WidgetsBindingObserver {
   bool _isCheckingSecurity = true;
   String _securityStatus = "Menginisialisasi Protokol Keamanan...";
 
@@ -29,7 +29,41 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _initializeDashboard();
+  }
+
+  @override dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      setState(() {
+        _isCheckingSecurity = true;
+        _securityStatus = "Memverifikasi ulang lokasi...";
+      });
+      _revalidateAccessSecurity();
+    }
+  }
+
+  Future<void> _revalidateAccessSecurity() async {
+    try {
+      final gateKeeper = HybridValidationService();
+      bool isValid = await gateKeeper.validateAccess(_employeeId, _employeeName, _employeeRole);
+
+      if (isValid && mounted) {
+        setState(() {
+          _isCheckingSecurity = false;
+        });
+      } else if (!isValid && mounted) {
+        _showAccessDeniedDialog("Anda terdeteksi berada di luar area toko. Sesi diakhiri.");
+      }
+    } catch (e) {
+      if (mounted) _showAccessDeniedDialog(ErrorHandler.getMessage(e));
+    }
   }
 
   Future<void> _initializeDashboard() async {
@@ -143,9 +177,24 @@ class _DashboardPageState extends State<DashboardPage> {
         defaultTargetPlatform == TargetPlatform.linux;
     final bool isMobile = !isDesktop;
 
-    final bool isOwnerOrTrusted = _employeeRole == 'owner' || _isTrusted;
-    final bool canAccessPos = (_employeeRole == 'cashier' || _employeeRole == 'owner') && isDesktop;
+    final bool isOwner = _employeeRole == 'owner';
+    final bool isAdmin = _employeeRole == 'admin';
+    final bool isCashier = _employeeRole == 'cashier';
+
+    // Admin HANYA bisa jika dia _isTrusted
+    final bool canManageEmployee = isOwner || (isAdmin && _isTrusted);
+
+    // Kelola Produk
+    final bool canManageProduct = isOwner || isAdmin || isCashier;
+
+    // Proses Transaksi (POS)
+    final bool canAccessPos = isCashier && isDesktop;
+
+    // Logika Akses: Melayani Customer & Scan QR
     final bool canScanQr = isMobile;
+
+    final bool canAccessManagement = canManageProduct || canManageEmployee;
+    final bool canAccessReports = isOwner;
 
     return Scaffold(
       appBar: AppBar(
@@ -276,10 +325,10 @@ class _DashboardPageState extends State<DashboardPage> {
                   if (canScanQr)
                     _buildQuickActionCard(context, "Scan QR", Icons.qr_code_scanner_rounded, Colors.purple, '/scan-qr'),
                   
-                  if (isOwnerOrTrusted)
-                    _buildQuickActionCard(context, "Pusat Manajemen", Icons.admin_panel_settings_rounded, Colors.redAccent, '/management'),
+                  if (canAccessManagement)
+                    _buildQuickActionCard(context, "Pusat Manajemen", Icons.admin_panel_settings_rounded, Colors.redAccent, '/management', extra: {'role': _employeeRole,'isTrusted': _isTrusted}),
                   
-                  if (isOwnerOrTrusted)
+                  if (canAccessReports)
                     _buildQuickActionCard(context, "Pusat Laporan", Icons.analytics_rounded, Colors.indigo, '/reports'),
                 ],
               ),

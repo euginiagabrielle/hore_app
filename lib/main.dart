@@ -73,7 +73,17 @@ final go_router = GoRouter(
     // Management Dashboard
     GoRoute(
       path: '/management',
-      builder: (context, state) => const ManagementDashboardPage(),
+      builder: (context, state) {
+        final extraData = state.extra as Map<String, dynamic>?;
+        
+        final String role = extraData?['role'] as String? ?? 'unknown';
+        final bool isTrusted = extraData?['isTrusted'] as bool? ?? false;
+
+        return ManagementDashboardPage(
+          employeeRole: role,
+          isTrusted: isTrusted,
+        );
+      },
     ),
 
     // Product Management

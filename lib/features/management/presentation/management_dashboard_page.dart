@@ -2,10 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 class ManagementDashboardPage extends StatelessWidget {
-  const ManagementDashboardPage({super.key});
+  final String employeeRole;
+  final bool isTrusted;
+
+  const ManagementDashboardPage({
+    super.key, 
+    required this.employeeRole, 
+    this.isTrusted = false,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final bool isOwner = employeeRole == 'owner';
+    final bool isAdmin = employeeRole == 'admin';
+    final bool canManageEmployee = isOwner || (isAdmin && isTrusted);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("Pusat Manajemen Data"),
@@ -24,12 +35,13 @@ class ManagementDashboardPage extends StatelessWidget {
             
             const SizedBox(height: 24),
 
-            _buildSectionTitle("Master Pegawai"),
-            _buildGrid(context, [
-              _buildMenuCard(context, title: "Data Pegawai", icon: Icons.people, color: Colors.indigo, route: '/employees'),
-            ]),
-            
-            const SizedBox(height: 24),
+            if (canManageEmployee) ...[
+              _buildSectionTitle("Master Pegawai"),
+              _buildGrid(context, [
+                _buildMenuCard(context, title: "Data Pegawai", icon: Icons.people, color: Colors.indigo, route: '/employees'),
+              ]),
+              const SizedBox(height: 24),
+            ],
 
             _buildSectionTitle("Master Transaksi"),
             _buildGrid(context, [
@@ -64,11 +76,10 @@ class ManagementDashboardPage extends StatelessWidget {
 
     return GridView.count(
       crossAxisCount: columns,
-      crossAxisSpacing: 12, // Spasi sedikit dikurangi agar tidak terlalu jauh
+      crossAxisSpacing: 12,
       mainAxisSpacing: 12,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      // Memberikan rasio sedikit lebih tinggi agar muat untuk teks 2 baris (misal 0.9)
       childAspectRatio: 0.9, 
       children: children,
     );
