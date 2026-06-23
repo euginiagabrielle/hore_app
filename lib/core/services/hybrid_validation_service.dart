@@ -7,10 +7,30 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 class HybridValidationService {
   final _supabase = Supabase.instance.client;
-  final String storeWifiBSSID = "1c:e5:04:da:e1:88";
+  final String storeWifiBSSID = "92:a8:62:65:a1:6d";
 
   Future<bool> validateAccess(int employeeId, String employeeName, String role) async {
+
+    // User Wi-Fi Data
+    // final info = NetworkInfo();
+    // String? currentBSSID = await info.getWifiBSSID();
+
+    // User Position Data
+    // Position position = await Geolocator.getCurrentPosition(
+    //   locationSettings: const LocationSettings(
+    //     accuracy: LocationAccuracy.high,
+    //   ),
+    // );
+
     if (role.toLowerCase() == 'owner') {
+      // await _logEmployeeActivity(
+      //   employeeId: employeeId, 
+      //   employeeName: employeeName, 
+      //   latitude: position.latitude, 
+      //   longitude: position.longitude, 
+      //   wifiBSSID: currentBSSID,
+      //   isMockLocator: false,
+      // );
       return true;
     }
     

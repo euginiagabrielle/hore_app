@@ -43,6 +43,7 @@ class _AuthGateState extends State<AuthGate> {
         }
 
         final session = snapshot.hasData ? snapshot.data!.session : null;
+        print("Access Token: ${session?.accessToken}");
         
         if (session != null) {
           return DashboardPage();

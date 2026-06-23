@@ -60,7 +60,7 @@ class _CategoryManagementPageState extends State<CategoryManagementPage> {
               content: TextField(
                 controller: nameController,
                 decoration: const InputDecoration(
-                  labelText: "Nama Kategori (contoh: Minuman)",
+                  labelText: "Nama Kategori (contoh: Kulkas)",
                   border: OutlineInputBorder(),
                 ),
                 textCapitalization: TextCapitalization.words,

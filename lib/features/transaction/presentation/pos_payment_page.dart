@@ -122,7 +122,7 @@ class _PosPaymentPageState extends State<PosPaymentPage> {
         'p_payment_method_id': _selectedPaymentMethodId,
       });
 
-      // Print thermal receipt
+      // Print receipt
       await _printReceipt(cash);
 
       if (mounted) {
@@ -144,7 +144,7 @@ class _PosPaymentPageState extends State<PosPaymentPage> {
     }
   }
 
-  // Receipt design using thermal paper 80mm
+  // Receipt design using paper 80mm
   Future<void> _printReceipt(double cashAmount) async {
     final doc = pw.Document();
 
