@@ -7,38 +7,36 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 class HybridValidationService {
   final _supabase = Supabase.instance.client;
-  final String storeWifiBSSID = "92:a8:62:65:a1:6d";
 
   Future<bool> validateAccess(int employeeId, String employeeName, String role) async {
 
-    // User Wi-Fi Data
-    // final info = NetworkInfo();
-    // String? currentBSSID = await info.getWifiBSSID();
-
-    // User Position Data
-    // Position position = await Geolocator.getCurrentPosition(
-    //   locationSettings: const LocationSettings(
-    //     accuracy: LocationAccuracy.high,
-    //   ),
-    // );
-
     if (role.toLowerCase() == 'owner') {
-      // await _logEmployeeActivity(
-      //   employeeId: employeeId, 
-      //   employeeName: employeeName, 
-      //   latitude: position.latitude, 
-      //   longitude: position.longitude, 
-      //   wifiBSSID: currentBSSID,
-      //   isMockLocator: false,
-      // );
       return true;
     }
     
+    // Get Wi-Fi BSSID data
+    String? targetWifiBSSID;
+    try {
+      final wifiData = await _supabase
+        .from('wifi_settings')
+        .select()
+        .order('id', ascending: true);
+      
+      if (wifiData.isEmpty) {
+        throw Exception("Pengaturan wifi toko belum lengkap. Silakan hubungi Admin atau Owner.");
+      }
+
+      targetWifiBSSID = wifiData.first['wifi_bssid'] as String?;
+    } catch (e) {
+      throw Exception("Gagal mengambil konfigurasi Wi-Fi resmi toko.");
+    }
+
     // Primary validation: Wi-Fi Detection
     final info = NetworkInfo();
     String? currentBSSID = await info.getWifiBSSID();
+    print("BSSID HP: $currentBSSID, BSSID Database: $targetWifiBSSID");
 
-    if (currentBSSID != null && currentBSSID.toLowerCase() == storeWifiBSSID.toLowerCase()) {
+    if (currentBSSID != null && targetWifiBSSID != null && currentBSSID.toLowerCase() == targetWifiBSSID.toLowerCase()) {
       await _logEmployeeActivity(
         employeeId: employeeId, 
         employeeName: employeeName, 

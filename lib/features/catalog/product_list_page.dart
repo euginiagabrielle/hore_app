@@ -173,8 +173,9 @@ class _ProductListPageState extends State<ProductListPage> {
     final filteredProducts = _products.where((p) {
       final name = p['product_name'].toString().toLowerCase();
       final code = p['product_code'].toString().toLowerCase();
+      final cat = p['categories']['category_name'].toString().toLowerCase();
       final query = _searchQuery.toLowerCase();
-      return name.contains(query) || code.contains(query);
+      return name.contains(query) || code.contains(query) || cat.contains(query);
     }).toList();
 
     return Scaffold(
