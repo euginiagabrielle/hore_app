@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:hore_app/features/transaction/data/sync_service.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../data/sales_order_service.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
-import '../../../core/database/local_db_helper.dart';
 
 class CheckoutPage extends StatefulWidget {
   const CheckoutPage({super.key});
@@ -71,48 +68,18 @@ class _CheckoutPageState extends State<CheckoutPage> {
         }
       }
 
-      // Check the internet connection
-      final List<ConnectivityResult> connectivityResult = await (Connectivity().checkConnectivity());
-      final bool isOffline = connectivityResult.contains(ConnectivityResult.none);
-
-      // Save to local database as a draft
-      await LocalDbHelper.instance.saveDraftOrder(
-        customerId: _orderService.currentCustomerId,
-        customerName: _orderService.currentCustomerName,
-        customerPhone: _phoneController.text,
+      await _orderService.submitOrderToSupabase(
         employeeId: empId,
-        employeeName: empName,
-        totalPrice: _orderService.totalPrice,
-        items: _orderService.currentItems,
+        customerPhone: _phoneController.text,
       );
 
-      if  (isOffline) {
-        // Offline condition
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text("Anda sedang Offline! Pesanan disimpan sebagai draft. Akan dikirim otomatis saat koneksi pulih."),
-              backgroundColor: Colors.orange,
-              duration: Duration(seconds: 4),
-            ),
-          );
-        }
-      } else {
-        // Online condition
-        final SyncService syncService = SyncService();
-        await syncService.syncOfflineOrdersToSupabase();
-
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Pesanan berhasil terkirim ke kasir."), backgroundColor: Colors.green),
-          );
-        }
-        // Simulasi pengiriman online sukses
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Pesanan langsung terkirim ke kasir."), backgroundColor: Colors.green),
-          );
-        }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Pesanan berhasil terkirim ke kasir."),
+            backgroundColor: Colors.green,
+          ),
+        );
       }
 
       // Clear the display after order is saved
@@ -124,7 +91,11 @@ class _CheckoutPageState extends State<CheckoutPage> {
     } catch(e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Terjadi kesalahan: $e"), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text("Transaksi Gagal! Diperlukan koneksi internet. Detail: $e"), 
+            backgroundColor: Colors.red, 
+            duration: const Duration(seconds: 4),
+          ),
         );
       }
     } finally {

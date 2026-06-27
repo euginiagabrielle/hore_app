@@ -1,3 +1,5 @@
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../../../core/utils/price_calculator.dart';
 
 class SalesOrderService {
@@ -97,5 +99,38 @@ class SalesOrderService {
     _currentOrderItems.clear();
     currentCustomerId = null;
     currentCustomerName = null;
+  }
+
+  Future<void> submitOrderToSupabase({
+    required int employeeId,
+    String? customerPhone,
+  }) async {
+    final supabase = Supabase.instance.client;
+
+    final orderResponse = await supabase.from('orders').insert({
+      'employee_id': employeeId,
+      'customer_id': currentCustomerId,
+      'order_date': DateTime.now().toIso8601String(),
+      'total_price': totalPrice,
+      'payment_method_id': null,
+      'order_status': 'pending',
+    }).select('order_id').single();
+
+    final int newOrderId = orderResponse['order_id'];
+
+    final List<Map<String, dynamic>> orderDetailsToInsert = currentItems.map((item) {
+      return {
+        'order_id': newOrderId,
+        'product_id': item['product']['product_id'],
+        'order_quantity': item['quantity'],
+        'unit_price': item['original_price'],
+        'discount_id': item['discount_id'],
+        'discount_amount': item['discount_amount'],
+        'order_price': item['price'],
+        'order_subtotal': item['subtotal'],
+      };
+    }).toList();
+
+    await supabase.from('order_details').insert(orderDetailsToInsert);
   }
 }

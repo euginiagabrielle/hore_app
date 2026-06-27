@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 
 import 'package:hore_app/features/transaction/data/sales_order_service.dart';
 import 'features/auth/presentation/change_password_dialog.dart';
-import 'features/transaction/data/sync_service.dart';
 import 'core/services/hybrid_validation_service.dart';
 import 'core/utils/error_handler.dart';
 
@@ -101,14 +100,6 @@ class _DashboardPageState extends State<DashboardPage> with WidgetsBindingObserv
         setState(() {
           _isCheckingSecurity = false;
         });
-
-        if (_employeeRole == 'sales') {
-          SyncService().syncOfflineOrdersToSupabase().then((_) {
-            debugPrint("Auto-Sync Sales Selesai Dijalankan.");
-          }).catchError((e) {
-            debugPrint("Auto-Sync Error: $e");
-          });
-        }
       }
     } catch (e) {
       if (mounted) {
