@@ -215,7 +215,6 @@ class MyApp extends StatelessWidget {
       title: "Hore Electronic POS",
       debugShowCheckedModeBanner: false,
       theme: ThemeData(primarySwatch: Colors.blue),
-      // home: const LoginPage(),
     );
   }
 }

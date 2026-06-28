@@ -68,8 +68,6 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
       );
     }
     
-    // final double price = (_product!['product_price'] as num).toDouble();
-    // final String formattedPrice = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0).format(price);
     final String imageUrl = _product!['product_picture_url'] ?? '';
     final String categoryName = _product!['categories']?['category_name'] ?? 'Tanpa Kategori';
     final double originalPrice = (_product!['product_price'] as num).toDouble();
@@ -117,7 +115,6 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
             // Product information
             Text("[${_product!['product_code']}] ${_product!['product_name']}", style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
-            // Text(formattedPrice, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.orange)),
             if (isDiscounted)
               Text(
                 NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0).format(originalPrice),

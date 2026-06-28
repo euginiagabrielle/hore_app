@@ -16,9 +16,6 @@ class SalesOrderService {
   double get totalPrice  {
     double total = 0;
     for (var item in _currentOrderItems.values) {
-      // final price = (item['product']['product_price'] as num).toDouble();
-      // final qty = item['quantity'] as int;
-      // total += (price * qty);
       total += item['subtotal'];
     }
     return total;
